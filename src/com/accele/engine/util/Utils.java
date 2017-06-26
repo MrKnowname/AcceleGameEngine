@@ -1,5 +1,6 @@
 package com.accele.engine.util;
 
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -8,11 +9,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.imageio.ImageIO;
+
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL14;
+import org.lwjgl.opengl.GL30;
 import org.lwjgl.util.Rectangle;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
+import org.newdawn.slick.opengl.Texture;
 import org.newdawn.slick.opengl.TextureLoader;
 
 import com.accele.engine.core.Engine;
@@ -29,11 +35,28 @@ import com.accele.engine.util.internal.Vertex;
 
 public final class Utils {
 	
+	public static final Loader DEFAULT_TEXTURE_LOADER = new Loader() {
+		@Override
+		public Object load(String location) {
+			try {
+				Texture texture = TextureLoader.getTexture("PNG", new FileInputStream(new File(location)));
+				GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
+				GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR_MIPMAP_LINEAR);
+				GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL14.GL_TEXTURE_LOD_BIAS, -0.4f);
+				return texture;
+			} catch (IOException e) {
+				System.err.println("ResourceLoaderError: " + e.getMessage());
+				return null;
+			}
+		}
+	};
+	
 	public static final Loader DEFAULT_IMAGE_LOADER = new Loader() {
 		@Override
 		public Object load(String location) {
 			try {
-				return TextureLoader.getTexture("PNG", new FileInputStream(new File(location)));
+				BufferedImage image = ImageIO.read(new File(location));
+				return image;
 			} catch (IOException e) {
 				System.err.println("ResourceLoaderError: " + e.getMessage());
 				return null;
@@ -180,6 +203,10 @@ public final class Utils {
 		return (var >= min ? var : min) <= max ? var : max;
 	}
 	
+	public static boolean inRange(float var, float min, float max) {
+		return (var >= min && var <= max);
+	}
+	
 	public static class Dim2 {
 		
 		public static boolean withinBounds(Rectangle boundee, Rectangle bounder, boolean boundeeHasOffset) {
@@ -272,6 +299,8 @@ public final class Utils {
 		public static final float GFX_FOV = 70;
 		public static final float GFX_NEAR_PLANE = 0.1f;
 		public static final float GFX_FAR_PLANE = 1000;
+		public static final float MAX_TERRAIN_PIXEL_COLOR = 0xFFFFFF;
+		public static final float MAX_TERRAIN_HEIGHT = 40f;
 		
 		public static Matrix4f createTransformationMatrix(Vector3f translation, float rx, float ry, float rz, float scale) {
 			Matrix4f matrix = new Matrix4f();
@@ -325,6 +354,68 @@ public final class Utils {
 			Matrix4f.translate(npos, matrix, matrix);
 			
 			return matrix;
+		}
+		
+		public static RawModel generateTerrainModel(ModelLoader loader, Resource heightMap, float size) {
+			return generateTerrainModel(loader, heightMap, MAX_TERRAIN_PIXEL_COLOR, MAX_TERRAIN_HEIGHT, size);
+		}
+		
+		public static RawModel generateTerrainModel(ModelLoader loader, Resource heightMap, float maxPixelColor, float maxHeight, float size) {
+			heightMap.load();
+			
+			int vertexCount = ((BufferedImage) heightMap.getValue()).getHeight();
+			
+			int count = vertexCount * vertexCount;
+			float[] vertices = new float[count * 3];
+			float[] normals = new float[count * 3];
+			float[] textureCoords = new float[count * 2];
+			int[] indices = new int[6 * (vertexCount - 1) * (vertexCount - 1)];
+			int vertexPointer = 0;
+			for (int i = 0; i < vertexCount; i++) {
+				for (int j = 0; j < vertexCount; j++) {
+					vertices[vertexPointer * 3] = (float) j / ((float) vertexCount - 1) * size;
+					vertices[vertexPointer * 3 + 1] = getTerrainHeight(j, i, (BufferedImage) heightMap.getValue(), maxPixelColor, maxHeight);
+					vertices[vertexPointer * 3 + 2] = (float) i / ((float) vertexCount - 1) * size;
+					Vector3f normal = calculateNormal(j, i, (BufferedImage) heightMap.getValue(), maxPixelColor, maxHeight);
+					normals[vertexPointer * 3] = normal.x;
+					normals[vertexPointer * 3 + 1] = normal.y;
+					normals[vertexPointer * 3 + 2] = normal.z;
+					textureCoords[vertexPointer * 2] = (float) j / ((float) vertexCount - 1);
+					textureCoords[vertexPointer * 2 + 1] = (float) i / ((float) vertexCount - 1);
+					vertexPointer++;
+				}
+			}
+			int pointer = 0;
+			for (int gz = 0; gz < vertexCount - 1; gz++) {
+				for (int gx = 0; gx < vertexCount - 1; gx++) {
+					int topLeft = (gz * vertexCount) + gx;
+					int topRight = topLeft + 1;
+					int bottomLeft = ((gz + 1) * vertexCount) + gx;
+					int bottomRight = bottomLeft + 1;
+					indices[pointer++] = topLeft;
+					indices[pointer++] = bottomLeft;
+					indices[pointer++] = topRight;
+					indices[pointer++] = topRight;
+					indices[pointer++] = bottomLeft;
+					indices[pointer++] = bottomRight;
+				}
+			}
+
+			return loader.loadToVAO(vertices, indices, textureCoords, normals);
+		}
+		
+		private static Vector3f calculateNormal(int x, int z, BufferedImage image, float maxPixelColor, float maxHeight) {
+			float lHeight = getTerrainHeight(x - 1, z, image, maxPixelColor, maxHeight);
+			float rHeight = getTerrainHeight(x - 1, z, image, maxPixelColor, maxHeight);
+			float dHeight = getTerrainHeight(x - 1, z, image, maxPixelColor, maxHeight);
+			float uHeight = getTerrainHeight(x - 1, z, image, maxPixelColor, maxHeight);
+			return (Vector3f) new Vector3f(lHeight - rHeight, 2f, dHeight - uHeight).normalise();
+		}
+		
+		private static float getTerrainHeight(int x, int z, BufferedImage image, float maxPixelColor, float maxHeight) {
+			if (!inRange(x, 0, image.getHeight()) || !inRange(z, 0, image.getHeight()))
+				return 0;
+			return ((image.getRGB(x, z) + (maxPixelColor / 2f)) / (maxPixelColor / 2f)) * maxHeight;
 		}
 		
 		public static RawModel generateFlatTerrainModel(ModelLoader loader, float size, int vertexCount) {

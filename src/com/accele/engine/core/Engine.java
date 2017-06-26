@@ -91,10 +91,10 @@ public final class Engine {
 	private ModelLoader modelLoader;
 	private Camera camera;
 	
-	private int recordedFPS;
 	private long lastFPS;
-	private int fps;
 	private Property propertyFPS;
+	private Property propertySecondsPerFrame;
+	private Property propertyTargetFPS;
 	
 	/** 
 	 * Constructs a new <tt>Engine</tt> with the specified <tt>screenWidth</tt>, <tt>screenHeight</tt>, <tt>title</tt>, and <tt>gameType</tt>.
@@ -218,6 +218,8 @@ public final class Engine {
 		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.shaderFogDensity", "acl_internal_shaderFogDensity", 0.007f, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
 		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.shaderFogGradient", "acl_internal_shaderFogGradient", 1.5f, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
 		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.clearColor", "acl_internal_clearColor", new Vector3f(0.5f, 0.5f, 0.5f), true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+		registry.register(Utils.addProperty(internalProperties, propertySecondsPerFrame = new Property(this, "acl.prop.secondsPerFrame", "acl_internal_secondsPerFrame", 0f, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+		registry.register(Utils.addProperty(internalProperties, propertyTargetFPS = new Property(this, "acl.prop.targetFPS", "acl_internal_targetFPS", 60, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
 		
 		registry.register(new KeyInput(this));
 		registry.register(new MouseInput(this));
@@ -257,7 +259,7 @@ public final class Engine {
 				Display.create(new PixelFormat(), attribs);
 				Display.setTitle((String) registry.getProperty("internal:title").get());
 				Display.setResizable(false);
-				Display.setVSyncEnabled(true);
+				//Display.setVSyncEnabled(true);
 				
 				glEnable(GL_DEPTH_TEST);
 				Utils.Dim3.enableCulling();
@@ -314,16 +316,17 @@ public final class Engine {
 			sHandler.onUpdate();
 			sHandler.onRender(graphics);
 			
-			updateFPS();
 			if ((boolean) showFPS.get() && ((int) gameType.get()) == 0) {				
 				graphics.setFont(registry.getFont("internal:default"));
 				Color prev = graphics.getColor();
 				graphics.setColor(Color.yellow);
-				graphics.drawString((int) registry.getProperty("internal:screenWidth").get() - 50, 10, String.valueOf(recordedFPS));
+				graphics.drawString((int) registry.getProperty("internal:screenWidth").get() - 50, 10, String.valueOf((int) propertyFPS.get()));
 				graphics.setColor(prev);
 			}
 			
+			Display.sync((int) propertyTargetFPS.get());
 			Display.update();
+			updateFPS();
 		}
 		
 		finalizeAndExit();
@@ -376,13 +379,10 @@ public final class Engine {
 	
 	/** Updates the internal frames per second counter and saves it to the <tt>fps</tt> property. */
 	private void updateFPS() {
-		if (getTime() - lastFPS > 1000) {
-			lastFPS = getTime();
-			recordedFPS = fps;
-			fps = 0;
-		}
-		fps++;
-		propertyFPS.set(recordedFPS);
+		long time = getTime();
+		propertySecondsPerFrame.set((time - lastFPS) / 1000f);
+		propertyFPS.set((int) (1f / (float) propertySecondsPerFrame.get()));
+		lastFPS = time;
 	}
 	
 	/** 
