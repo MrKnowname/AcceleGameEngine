@@ -33,7 +33,7 @@ public class Test {
 	}
 	
 	public static void main(String[] args) {
-		System.setProperty("org.lwjgl.librarypath", "/Users/MrKnowname/Desktop/BesiegeTest/lib/native/");
+		System.setProperty("org.lwjgl.librarypath", "C:/Users/MrKnowname/Desktop/BesiegeTest/lib/native/");
 		
 		new Test();
 	}

@@ -94,6 +94,7 @@ public final class Engine {
 	private int recordedFPS;
 	private long lastFPS;
 	private int fps;
+	private Property propertyFPS;
 	
 	/** 
 	 * Constructs a new <tt>Engine</tt> with the specified <tt>screenWidth</tt>, <tt>screenHeight</tt>, <tt>title</tt>, and <tt>gameType</tt>.
@@ -209,7 +210,7 @@ public final class Engine {
 		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.musicVolume", "acl_internal_musicVolume", 0f, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
 		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.soundVolume", "acl_internal_soundVolume", 0f, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
 		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.cycleIO", "acl_internal_cycleIO", true, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
-		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.fps", "acl_internal_fps", 0, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+		registry.register(Utils.addProperty(internalProperties, propertyFPS = new Property(this, "acl.prop.fps", "acl_internal_fps", 0, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
 		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.showFPS", "acl_internal_showFPS", false, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
 		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.entityDuration", "acl_internal_entityDuration", true, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
 		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.entityCollision2D", "acl_internal_entityCollision2D", gameType == 0, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
@@ -313,9 +314,8 @@ public final class Engine {
 			sHandler.onUpdate();
 			sHandler.onRender(graphics);
 			
-			if ((boolean) showFPS.get() && ((int) gameType.get()) == 0) {
-				updateFPS();
-				
+			updateFPS();
+			if ((boolean) showFPS.get() && ((int) gameType.get()) == 0) {				
 				graphics.setFont(registry.getFont("internal:default"));
 				Color prev = graphics.getColor();
 				graphics.setColor(Color.yellow);
@@ -382,7 +382,7 @@ public final class Engine {
 			fps = 0;
 		}
 		fps++;
-		registry.getProperty("internal:fps").set(recordedFPS);
+		propertyFPS.set(recordedFPS);
 	}
 	
 	/** 
@@ -475,7 +475,9 @@ public final class Engine {
 	
 	/**
 	 * Sets the <tt>camera</tt> to the specified instance of {@link Camera}.
+	 * <p>
 	 * This method is intended for internal use only and should not be called by the user.
+	 * </p>
 	 * @param camera The instance of <tt>Camera</tt> to set
 	 */
 	protected void setCamera(Camera camera) {
