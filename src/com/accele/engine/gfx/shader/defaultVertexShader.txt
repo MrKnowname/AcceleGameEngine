@@ -17,13 +17,15 @@ uniform vec3 lightPosition;
 uniform float useFakeLighting;
 uniform float fogDensity;
 uniform float fogGradient;
+uniform int numRows;
+uniform vec2 offset;
 
 void main(void) {
 
 	vec4 worldPosition = transformationMatrix * vec4(position, 1.0);
 	vec4 positionRelativeToCamera = viewMatrix * worldPosition;
 	gl_Position = projectionMatrix * positionRelativeToCamera;
-	passTextureCoords = textureCoords;
+	passTextureCoords = (textureCoords / numRows) + offset;
 	
 	vec3 actualNormal = normal;
 	if (useFakeLighting > 0.5) {

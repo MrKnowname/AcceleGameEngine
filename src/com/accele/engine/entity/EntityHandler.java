@@ -20,8 +20,8 @@ import com.accele.engine.util.Batch;
 /**
  * This class controls the updating and rendering of all instances of the {@link Entity} class.
  * <p>
- * In addition to calling the <tt>onUpdate</tt> and <tt>onRender</tt> methods of each <tt>Entity</tt>, the <tt>EntityHandler</tt> controls the collision detection between entities.
- * This functionality can be toggled via the <tt>entityCollision2D</tt> and <tt>entityCollision3D</tt> properties, which are <tt>true</tt> by default depending on the <tt>gameType</tt>.
+ * In addition to calling the {@code onUpdate} and {@code onRender} methods of each {@code Entity}, the {@code EntityHandler} controls the collision detection between entities.
+ * This functionality can be toggled via the {@code entityCollision2D} and {@code entityCollision3D} properties, which are {@code true} by default depending on the {@code gameType}.
  * </p>
  * @author William Garland
  * @since 2.0.0
@@ -36,11 +36,11 @@ public final class EntityHandler implements Tickable, Renderable {
 	private Light staticShaderLight;
 	
 	/**
-	 * Creates a new instance of <tt>EntityHandler</tt>.
+	 * Creates a new instance of {@code EntityHandler}.
 	 * <p>
 	 * This constructor should only be called by the {@link Engine} and should not be called by the user.
 	 * </p>
-	 * @param engine The instance of the <tt>Engine</tt>
+	 * @param engine The instance of the {@code Engine}
 	 */
 	public EntityHandler(Engine engine) {
 		this.engine = engine;
@@ -93,7 +93,7 @@ public final class EntityHandler implements Tickable, Renderable {
 	
 	/**
 	 * Adds the specified {@link Entity} to the list of entities.
-	 * @param e The <tt>Entity</tt> to add
+	 * @param e The {@code Entity} to add
 	 */
 	public void addEntity(Entity e) {
 		if (e instanceof Entity3D && e.getClass().isAnnotationPresent(Batch.class))
@@ -104,7 +104,7 @@ public final class EntityHandler implements Tickable, Renderable {
 	
 	/**
 	 * Adds the specified {@link Entity3D} to the list of batch entities.
-	 * @param e The <tt>Entity3D</tt> to add
+	 * @param e The {@code Entity3D} to add
 	 */
 	public void addBatchEntity(Entity3D e) {
 		if (batchEntities.containsKey(e.model)) {
@@ -118,7 +118,7 @@ public final class EntityHandler implements Tickable, Renderable {
 	
 	/**
 	 * Removes the first occurrence of the specified {@link Entity} from the list of entities.
-	 * @param e The <tt>Entity</tt> to remove
+	 * @param e The {@code Entity} to remove
 	 */
 	public void removeEntity(Entity e) {
 		if (e instanceof Entity3D && e.getClass().isAnnotationPresent(Batch.class)) {
@@ -128,18 +128,18 @@ public final class EntityHandler implements Tickable, Renderable {
 	}
 	
 	/**
-	 * Retrieves the first occurrence of the {@link Entity} with the specified <tt>localizedID</tt>.
-	 * @param localizedID The id of the <tt>Entity</tt> to find
-	 * @return The first occurrence of the <tt>Entity</tt> with the specified <tt>localizedID</tt>
+	 * Retrieves the first occurrence of the {@link Entity} with the specified {@code localizedID}.
+	 * @param localizedID The id of the {@code Entity} to find
+	 * @return The first occurrence of the {@code Entity} with the specified {@code localizedID}
 	 */
 	public Entity getFirstEntityByID(String localizedID) {
 		return entities.stream().filter(p -> p.localizedID.equals(localizedID)).findFirst().orElseGet(() -> null);
 	}
 	
 	/**
-	 * Retrieves all occurrences of the {@link Entity} with the specified <tt>localizedID</tt>.
-	 * @param localizedID The id of the <tt>Entity</tt> to find
-	 * @return All occurrences of the <tt>Entity</tt> with the specified <tt>localizedID</tt> as an array of <tt>Entity</tt>
+	 * Retrieves all occurrences of the {@link Entity} with the specified {@code localizedID}.
+	 * @param localizedID The id of the {@code Entity} to find
+	 * @return All occurrences of the {@code Entity} with the specified {@code localizedID} as an array of {@code Entity}
 	 */
 	public Entity[] getAllEntitiesByID(String localizedID) {
 		List<Entity> tmp = entities.stream().filter(p -> p.localizedID.equals(localizedID)).collect(Collectors.toList());
@@ -157,11 +157,11 @@ public final class EntityHandler implements Tickable, Renderable {
 	/**
 	 * Adds the specified array of {@link Entity} to the map of batch entities to be rendered using the specified {@link TexturedModel}.
 	 * <p>
-	 * Note that if an entry using the specified <tt>TexturedModel</tt> is already present,
-	 * the list for the model will be overwritten with the specified <tt>entities</tt> array.
+	 * Note that if an entry using the specified {@code TexturedModel} is already present,
+	 * the list for the model will be overwritten with the specified {@code entities} array.
 	 * </p>
-	 * @param model The <tt>TexturedModel</tt> to use
-	 * @param entities The array of <tt>Entity</tt> to add
+	 * @param model The {@code TexturedModel} to use
+	 * @param entities The array of {@code Entity} to add
 	 */
 	public void addBatch(TexturedModel model, Entity3D[] entities) {
 		this.batchEntities.put(model, Arrays.asList(entities));

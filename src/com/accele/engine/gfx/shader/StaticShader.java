@@ -1,6 +1,7 @@
 package com.accele.engine.gfx.shader;
 
 import org.lwjgl.util.vector.Matrix4f;
+import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
 
 import com.accele.engine.gfx.Camera;
@@ -23,6 +24,8 @@ public class StaticShader extends Shader {
 	private int location_fogDensity;
 	private int location_fogGradient;
 	private int location_skyColor;
+	private int location_numRows;
+	private int location_offset;
 	
 	public StaticShader(String registryID, String localizedID) {
 		super(registryID, localizedID, VERTEX_FILE, FRAGMENT_FILE);
@@ -48,6 +51,8 @@ public class StaticShader extends Shader {
 		location_fogDensity = super.getUniformLocation("fogDensity");
 		location_fogGradient = super.getUniformLocation("fogGradient");
 		location_skyColor = super.getUniformLocation("skyColor");
+		location_numRows = super.getUniformLocation("numRows");
+		location_offset = super.getUniformLocation("offset");
 	}
 	
 	public void loadTransformationMatrix(Matrix4f matrix) {
@@ -86,6 +91,14 @@ public class StaticShader extends Shader {
 	
 	public void loadSkyColor(Vector3f skyColor) {
 		super.loadUniformVector(location_skyColor, skyColor);
+	}
+	
+	public void loadNumRows(float numRows) {
+		super.loadUniformFloat(location_numRows, numRows);
+	}
+	
+	public void loadOffset(Vector2f offset) {
+		super.loadUniformVector(location_offset, offset);
 	}
 
 }

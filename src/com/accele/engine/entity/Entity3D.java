@@ -12,8 +12,9 @@ public abstract class Entity3D extends Entity {
 	protected float scale;
 	protected TexturedModel model;
 	protected Shader shader;
+	protected int textureIndex;
 	
-	public Entity3D(Engine engine, String registryID, String localizedID, Vector3f pos, float xRot, float yRot, float zRot, float scale, TexturedModel model, Shader shader) {
+	public Entity3D(Engine engine, String registryID, String localizedID, Vector3f pos, float xRot, float yRot, float zRot, float scale, TexturedModel model, Shader shader, int textureIndex) {
 		super(engine, registryID, localizedID, pos);
 		this.xRot = xRot;
 		this.yRot = yRot;
@@ -21,6 +22,7 @@ public abstract class Entity3D extends Entity {
 		this.scale = scale;
 		this.model = model;
 		this.shader = shader;
+		this.textureIndex = textureIndex;
 	}
 	
 	public float getXRot() {
@@ -45,6 +47,16 @@ public abstract class Entity3D extends Entity {
 	
 	public Shader getShader() {
 		return shader;
+	}
+	
+	public float getTextureXOffset() {
+		int col = textureIndex % model.getTexture().getNumRows();
+		return (float) col / (float) model.getTexture().getNumRows();
+	}
+	
+	public float getTextureYOffset() {
+		int row = textureIndex / model.getTexture().getNumRows();
+		return (float) row / (float) model.getTexture().getNumRows();
 	}
 
 }

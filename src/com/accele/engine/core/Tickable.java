@@ -3,7 +3,7 @@ package com.accele.engine.core;
 /** 
  * This interface is required for any object that needs to consistently update information.
  * <p>
- * For all implementing classes, the <tt>onUpdate</tt> method will run once per object every cycle, as set by the primary game loop, unless called externally by the user.
+ * For all implementing classes, the {@code onUpdate} method will run once per object every cycle, as set by the primary game loop, unless called externally by the user.
  * </p>
  * 
  * @author William Garland

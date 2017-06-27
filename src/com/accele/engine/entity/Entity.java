@@ -12,15 +12,15 @@ import com.accele.engine.core.Tickable;
 import com.accele.engine.property.Property;
 
 /**
- * The <tt>Entity</tt> class represents the base class for any and all entities present in the game.
+ * The {@code Entity} class represents the base class for any and all entities present in the game.
  * <p>
  * This class assumes the desire of the user to update and render the entity to the screen, as it implements the {@link Tickable} and {@link Renderable} interfaces.
  * Entities are not limited in their functionality nor are they limited in their design; this class was intended to be a base class for any type of entity, whether animate or inanimate.
- * Frequently used examples of the <tt>Entity</tt> class include, but are not limited to: static objects, enemies, players, non-playable characters, and text.
+ * Frequently used examples of the {@code Entity} class include, but are not limited to: static objects, enemies, players, non-playable characters, and text.
  * </p>
  * <p>
  * All instances of this class are managed via the {@link EntityHandler} class.
- * Multiple objects of the same id may be registered as the list of entities is not bound by their <tt>registryID</tt> or <tt>localizedID</tt>.
+ * Multiple objects of the same id may be registered as the list of entities is not bound by their {@code registryID} or {@code localizedID}.
  * </p>
  * @author William Garland
  * @since 1.0.0
@@ -35,11 +35,11 @@ public abstract class Entity implements Indexable, Tickable, Renderable {
 	protected int duration;
 	
 	/**
-	 * Creates a new <tt>Entity</tt> with the given parameters.
+	 * Creates a new {@code Entity} with the given parameters.
 	 * @param engine The instance of {@link Engine} utilized by the user
-	 * @param registryID The <tt>registryID</tt> of the <tt>Entity</tt>
-	 * @param localizedID The <tt>localizedID</tt> of the <tt>Entity</tt>
-	 * @param pos The position of the <tt>Entity</tt> as a vector that uses floating-point values
+	 * @param registryID The {@code registryID} of the {@code Entity}
+	 * @param localizedID The {@code localizedID} of the {@code Entity}
+	 * @param pos The position of the {@code Entity} as a vector that uses floating-point values
 	 */
 	public Entity(Engine engine, String registryID, String localizedID, Vector pos) {
 		this.engine = engine;
@@ -51,7 +51,7 @@ public abstract class Entity implements Indexable, Tickable, Renderable {
 	}
 	
 	/**
-	 * Updates internal values associated with this instance of <tt>Entity</tt>.
+	 * Updates internal values associated with this instance of {@code Entity}.
 	 * <p>
 	 * Note: This method is not intended for direct use by the user; it should only be called via the primary game loop.
 	 * </p>
@@ -79,12 +79,12 @@ public abstract class Entity implements Indexable, Tickable, Renderable {
 	}
 	
 	/**
-	 * Adds the specified {@link Property} to the list of properties associated with the <tt>Entity</tt>.
+	 * Adds the specified {@link Property} to the list of properties associated with the {@code Entity}.
 	 * <p>
 	 * Note: This method can be chained in order to add multiple properties within one statement.
 	 * </p>
-	 * @param property The <tt>Property</tt> to add
-	 * @return The current<tt>Entity</tt>
+	 * @param property The {@code Property} to add
+	 * @return The current{@code Entity}
 	 */
 	public final Entity withProperty(Property property) {
 		properties.add(property);
@@ -92,8 +92,8 @@ public abstract class Entity implements Indexable, Tickable, Renderable {
 	}
 	
 	/**
-	 * Gets the position of the <tt>Entity</tt>.
-	 * @return An instance of <tt>Vector</tt> containing the position of the <tt>Entity</tt>
+	 * Gets the position of the {@code Entity}.
+	 * @return An instance of {@code Vector} containing the position of the {@code Entity}
 	 */
 	public Vector getPos() {
 		return pos;

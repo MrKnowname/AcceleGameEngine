@@ -62,16 +62,16 @@ import com.accele.engine.util.Utils;
  * The primary class for the AcceleEngine library.
  * <p>
  * All interactions with any part of the engine must be performed through an instance of this class.
- * In order to establish a new game instance, an instance of this class must be created followed by calling the <tt>run</tt> method.
+ * In order to establish a new game instance, an instance of this class must be created followed by calling the {@code run} method.
  * The calling of the constructor initializes the engine and all associated objects, and as such,
- * no objects contained within the <tt>Engine</tt> instance or any methods related to the LWJGL framework may be called prior to this.
- * Additionally, the screen width and height as well as the window title may be set within the <tt>Engine</tt> constructor.
+ * no objects contained within the {@code Engine} instance or any methods related to the LWJGL framework may be called prior to this.
+ * Additionally, the screen width and height as well as the window title may be set within the {@code Engine} constructor.
  * By default, the screen dimensions are 640x480 and the title is blank.
  * </p>
  * <p>
- * Upon calling the <tt>run</tt> method, the primary game loop will begin and will not terminate unless the <tt>exit</tt> or <tt>forceExit</tt> method is called.
- * As such, any initializations that the user may need to complete must be performed after the engine initialization and before the call to <tt>run</tt>.
- * This may include, but is not limited to, any calls to the <tt>Registry</tt>, any non-engine related initializations, or changes to internal or user-defined properties.
+ * Upon calling the {@code run} method, the primary game loop will begin and will not terminate unless the {@code exit} or {@code forceExit} method is called.
+ * As such, any initializations that the user may need to complete must be performed after the engine initialization and before the call to {@code run}.
+ * This may include, but is not limited to, any calls to the {@code Registry}, any non-engine related initializations, or changes to internal or user-defined properties.
  * </p>
  * 
  * @author William Garland
@@ -97,7 +97,7 @@ public final class Engine {
 	private Property propertyTargetFPS;
 	
 	/** 
-	 * Constructs a new <tt>Engine</tt> with the specified <tt>screenWidth</tt>, <tt>screenHeight</tt>, <tt>title</tt>, and <tt>gameType</tt>.
+	 * Constructs a new {@code Engine} with the specified {@code screenWidth}, {@code screenHeight}, {@code title}, and {@code gameType}.
 	 * @param screenWidth The width of the screen
 	 * @param screenHeight The height of the screen
 	 * @param title The title of the screen
@@ -134,9 +134,9 @@ public final class Engine {
 	}
 	
 	/** 
-	 * Constructs a new <tt>Engine</tt> with the specified <tt>screenWidth</tt> and <tt>screenHeight</tt>.
+	 * Constructs a new {@code Engine} with the specified {@code screenWidth} and {@code screenHeight}.
 	 * <p>
-	 * The <tt>title</tt> by default is left blank and the <tt>gameType</tt> is 0.
+	 * The {@code title} by default is left blank and the {@code gameType} is 0.
 	 * </p>
 	 * @param screenWidth The width of the screen
 	 * @param screenHeight The height of the screen
@@ -146,9 +146,9 @@ public final class Engine {
 	}
 	
 	/** 
-	 * Constructs a new <tt>Engine</tt> with the specified <tt>screenWidth</tt>, <tt>screenHeight</tt>, and <tt>gameType</tt>.
+	 * Constructs a new {@code Engine} with the specified {@code screenWidth}, {@code screenHeight}, and {@code gameType}.
 	 * <p>
-	 * The <tt>title</tt> by default is left blank.
+	 * The {@code title} by default is left blank.
 	 * </p>
 	 * @param screenWidth The width of the screen
 	 * @param screenHeight The height of the screen
@@ -159,9 +159,9 @@ public final class Engine {
 	}
 	
 	/** 
-	 * Constructs a new <tt>Engine</tt> with the specified <tt>title</tt>.
+	 * Constructs a new {@code Engine} with the specified {@code title}.
 	 * <p>
-	 * The <tt>screenWidth</tt>, <tt>screenHeight</tt>, and <tt>gameType</tt> by default are 640, 480, and 0, respectively.
+	 * The {@code screenWidth}, {@code screenHeight}, and {@code gameType} by default are 640, 480, and 0, respectively.
 	 * </p>
 	 * @param title The title of the screen
 	 */
@@ -170,9 +170,9 @@ public final class Engine {
 	}
 	
 	/** 
-	 * Constructs a new <tt>Engine</tt> with the specified <tt>title</tt> and <tt>gameType</tt>.
+	 * Constructs a new {@code Engine} with the specified {@code title} and {@code gameType}.
 	 * <p>
-	 * The <tt>screenWidth</tt> and <tt>screenHeight</tt> by default are 640 and 480, respectively.
+	 * The {@code screenWidth} and {@code screenHeight} by default are 640 and 480, respectively.
 	 * </p>
 	 * @param title The title of the screen
 	 * @param gameType The dimensions that the game will be. 0 = 2D, 1 = 3D
@@ -182,9 +182,9 @@ public final class Engine {
 	}
 	
 	/** 
-	 * Constructs a new <tt>Engine</tt>.
+	 * Constructs a new {@code Engine}.
 	 * <p>
-	 * The <tt>screenWidth</tt>, <tt>screenHeight</tt>, and <tt>title</tt> by default are 640, 480, and blank, respectively.
+	 * The {@code screenWidth}, {@code screenHeight}, and {@code title} by default are 640, 480, and blank, respectively.
 	 * </p>
 	 * @param gameType The dimensions that the game will be. 0 = 2D, 1 = 3D
 	 */
@@ -193,9 +193,9 @@ public final class Engine {
 	}
 	
 	/** 
-	 * Constructs a new <tt>Engine</tt>.
+	 * Constructs a new {@code Engine}.
 	 * <p>
-	 * The <tt>screenWidth</tt>, <tt>screenHeight</tt>, <tt>title</tt>, and <tt>gameType</tt> by default are 640, 480, blank, and 0, respectively.
+	 * The {@code screenWidth}, {@code screenHeight}, {@code title}, and {@code gameType} by default are 640, 480, blank, and 0, respectively.
 	 * </p>
 	 */
 	public Engine() {
@@ -294,9 +294,9 @@ public final class Engine {
 	 * Starts the primary game loop.
 	 * <p>
 	 * This method controls the updating and rendering of every aspect of the engine.
-	 * Additionally, the frames per second counter is controlled by this method and can be shown and hidden via the <tt>showFPS</tt> property.
+	 * Additionally, the frames per second counter is controlled by this method and can be shown and hidden via the {@code showFPS} property.
 	 * </p><p>
-	 * Note: This method will continue to run as long as the <tt>running</tt> property is true and the user has not requested to close the window of the program.
+	 * Note: This method will continue to run as long as the {@code running} property is true and the user has not requested to close the window of the program.
 	 * </p>
 	 */
 	public void run() {
@@ -334,10 +334,10 @@ public final class Engine {
 	
 	/** 
 	 * Destroys the display and terminates the program.
-	 * Additionally, this method will attempt to call the <tt>onExit</tt> method of the current state as specified by the <tt>StateHandler</tt>.
-	 * If the current state is null, <tt>onExit</tt> will not be called.
+	 * Additionally, this method will attempt to call the {@code onExit} method of the current state as specified by the {@code StateHandler}.
+	 * If the current state is null, {@code onExit} will not be called.
 	 * <p>
-	 * Caution is advised concerning this method: any code after it is called will not run, as this method calls the <tt>System.exit</tt> function.
+	 * Caution is advised concerning this method: any code after it is called will not run, as this method calls the {@code System.exit} function.
 	 * </p><p>
 	 * Note: This method is intended for internal use and should not be called by the user.
 	 * </p>
@@ -355,8 +355,8 @@ public final class Engine {
 	 * Prepares the engine for closing the program.
 	 * <p>
 	 * Note that this method does not actually terminate the program;
-	 * it only sets the <tt>running</tt> property to <tt>false</tt> which will terminate the game loop upon its next cycle.
-	 * Any code within the game loop after this method is called may also be called, as the <tt>run</tt> method must complete its current cycle before checking game loop conditions.
+	 * it only sets the {@code running} property to {@code false} which will terminate the game loop upon its next cycle.
+	 * Any code within the game loop after this method is called may also be called, as the {@code run} method must complete its current cycle before checking game loop conditions.
 	 * </p><p>
 	 * If a quicker termination is required, the {@link #forceExit()} method may be used.
 	 * </p>
@@ -377,7 +377,7 @@ public final class Engine {
 		System.exit(1);
 	}
 	
-	/** Updates the internal frames per second counter and saves it to the <tt>fps</tt> property. */
+	/** Updates the internal frames per second counter and saves it to the {@code fps} property. */
 	private void updateFPS() {
 		long time = getTime();
 		propertySecondsPerFrame.set((time - lastFPS) / 1000f);
@@ -387,7 +387,7 @@ public final class Engine {
 	
 	/** 
 	 * Gets the {@link Registry} instance as maintained by the engine.
-	 * @return An instance of the <tt>Registry</tt> class
+	 * @return An instance of the {@code Registry} class
 	 */
 	public Registry getRegistry() {
 		return registry;
@@ -395,7 +395,7 @@ public final class Engine {
 	
 	/** 
 	 * Gets the {@link Graphics} instance as maintained by the engine.
-	 * @return An instance of the <tt>Graphics</tt> class
+	 * @return An instance of the {@code Graphics} class
 	 */
 	public Graphics getGraphics() {
 		return graphics;
@@ -403,7 +403,7 @@ public final class Engine {
 	
 	/** 
 	 * Gets the {@link IOHandler} instance as maintained by the engine.
-	 * @return An instance of the <tt>IOHandler</tt> class
+	 * @return An instance of the {@code IOHandler} class
 	 */
 	public IOHandler getIOHandler() {
 		return ioHandler;
@@ -411,7 +411,7 @@ public final class Engine {
 	
 	/** 
 	 * Gets the {@link AudioHandler} instance as maintained by the engine.
-	 * @return An instance of the <tt>AudioHandler</tt> class
+	 * @return An instance of the {@code AudioHandler} class
 	 */
 	public AudioHandler getAudioHandler() {
 		return aHandler;
@@ -419,7 +419,7 @@ public final class Engine {
 	
 	/** 
 	 * Gets the {@link PropertyHandler} instance as maintained by the engine.
-	 * @return An instance of the <tt>PropertyHandler</tt> class
+	 * @return An instance of the {@code PropertyHandler} class
 	 */
 	public PropertyHandler getPropertyHandler() {
 		return pHandler;
@@ -427,7 +427,7 @@ public final class Engine {
 	
 	/** 
 	 * Gets the {@link EntityHandler} instance as maintained by the engine.
-	 * @return An instance of the <tt>EntityHandler</tt> class
+	 * @return An instance of the {@code EntityHandler} class
 	 */
 	public EntityHandler getEntityHandler() {
 		return eHandler;
@@ -435,7 +435,7 @@ public final class Engine {
 	
 	/** 
 	 * Gets the {@link StateHandler} instance as maintained by the engine.
-	 * @return An instance of the <tt>StateHandler</tt> class
+	 * @return An instance of the {@code StateHandler} class
 	 */
 	public StateHandler getStateHandler() {
 		return sHandler;
@@ -443,7 +443,7 @@ public final class Engine {
 	
 	/** 
 	 * Gets the {@link TerrainHandler} instance as maintained by the engine.
-	 * @return An instance of the <tt>TerrainHandler</tt> class
+	 * @return An instance of the {@code TerrainHandler} class
 	 */
 	public TerrainHandler getTerrainHandler() {
 		return tHandler;
@@ -451,7 +451,7 @@ public final class Engine {
 	
 	/** 
 	 * Gets the {@link Random} instance as maintained by the engine.
-	 * @return An instance of the <tt>Random</tt> class as supplied via {@link ThreadLocalRandom}
+	 * @return An instance of the {@code Random} class as supplied via {@link ThreadLocalRandom}
 	 */
 	public Random getRand() {
 		return rand;
@@ -459,7 +459,7 @@ public final class Engine {
 	
 	/** 
 	 * Gets the {@link ModelLoader} instance as maintained by the engine.
-	 * @return An instance of the <tt>ModelLoader</tt> class
+	 * @return An instance of the {@code ModelLoader} class
 	 */
 	public ModelLoader getModelLoader() {
 		return modelLoader;
@@ -467,18 +467,18 @@ public final class Engine {
 	
 	/** 
 	 * Gets the {@link Camera} instance as maintained by the engine.
-	 * @return An instance of the <tt>Camera</tt> class
+	 * @return An instance of the {@code Camera} class
 	 */
 	public Camera getCamera() {
 		return camera;
 	}
 	
 	/**
-	 * Sets the <tt>camera</tt> to the specified instance of {@link Camera}.
+	 * Sets the {@code camera} to the specified instance of {@link Camera}.
 	 * <p>
 	 * This method is intended for internal use only and should not be called by the user.
 	 * </p>
-	 * @param camera The instance of <tt>Camera</tt> to set
+	 * @param camera The instance of {@code Camera} to set
 	 */
 	protected void setCamera(Camera camera) {
 		this.camera = camera;

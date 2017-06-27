@@ -16,9 +16,9 @@ public abstract class Entity2D extends Entity {
 	}
 	
 	/**
-	 * Returns a <tt>Rectangle</tt> with the specified bounds of the <tt>Entity</tt>.
+	 * Returns a {@code Rectangle} with the specified bounds of the {@code Entity}.
 	 * <p>
-	 * Typical implementation of this method involves returning an instance of <tt>Rectangle</tt> using the position of the <tt>Entity</tt> and its dimensions.
+	 * Typical implementation of this method involves returning an instance of {@code Rectangle} using the position of the {@code Entity} and its dimensions.
 	 * For example:
 	 * </p>
 	 * <blockquote>
@@ -30,25 +30,25 @@ public abstract class Entity2D extends Entity {
 	 * </pre>
 	 * </blockquote>
 	 * <p>
-	 * In the above example, <tt>width</tt> and <tt>height</tt> are arbitrary values specified by the user and are not internal variables.
+	 * In the above example, {@code width} and {@code height} are arbitrary values specified by the user and are not internal variables.
 	 * </p>
 	 * <p>
 	 * Note: This method is used in determining collisions between entities.
 	 * </p>
-	 * @return A new instance of <tt>Rectangle</tt> specifying the bounds of the <tt>Entity</tt>
+	 * @return A new instance of {@code Rectangle} specifying the bounds of the {@code Entity}
 	 */
 	public abstract Rectangle getBounds();
 
 	/**
-	 * Runs upon this <tt>Entity</tt> colliding with another <tt>Entity</tt>.
+	 * Runs upon this {@code Entity} colliding with another {@code Entity}.
 	 * <p>
-	 * The collision of two entities colliding with each other is determined via their <tt>getBounds</tt> methods
-	 * and whether the <tt>intersects</tt> method of each <tt>Rectangle</tt> from <tt>getBounds</tt> returns <tt>true</tt>.
+	 * The collision of two entities colliding with each other is determined via their {@code getBounds} methods
+	 * and whether the {@code intersects} method of each {@code Rectangle} from {@code getBounds} returns {@code true}.
 	 * </p>
 	 * <p>
-	 * Entity collision can be toggled via the <tt>entityCollision</tt> property, which is <tt>true</tt> by default.
+	 * Entity collision can be toggled via the {@code entityCollision} property, which is {@code true} by default.
 	 * </p>
-	 * @param e The <tt>Entity</tt> that collided with the current <tt>Entity</tt>
+	 * @param e The {@code Entity} that collided with the current {@code Entity}
 	 */
 	public abstract void onCollision(Entity2D e);
 	
