@@ -31,6 +31,7 @@ import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.util.Rectangle;
+import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
 import org.newdawn.slick.Color;
 
@@ -277,6 +278,8 @@ public final class Graphics {
 		if (texture.hasTransparency())
 			Utils.Dim3.disableCulling();
 		
+		shader.loadNumRows(texture.getNumRows());
+		shader.loadOffset(new Vector2f(entity.getTextureXOffset(), entity.getTextureYOffset()));
 		shader.loadSkyColor((Vector3f) engine.getRegistry().getProperty("internal:clearColor").get());
 		shader.loadFogDensity((float) engine.getRegistry().getProperty("internal:shaderFogDensity").get());
 		shader.loadFogGradient((float) engine.getRegistry().getProperty("internal:shaderFogGradient").get());
@@ -303,6 +306,7 @@ public final class Graphics {
 		if (texture.hasTransparency())
 			Utils.Dim3.disableCulling();
 		
+		shader.loadNumRows(texture.getNumRows());
 		shader.loadSkyColor((Vector3f) engine.getRegistry().getProperty("internal:clearColor").get());
 		shader.loadFogDensity((float) engine.getRegistry().getProperty("internal:shaderFogDensity").get());
 		shader.loadFogGradient((float) engine.getRegistry().getProperty("internal:shaderFogGradient").get());
@@ -312,6 +316,7 @@ public final class Graphics {
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, model.getTexture().getImage().getTextureID());
 		
 		for (Entity3D e : entities) {
+			shader.loadOffset(new Vector2f(e.getTextureXOffset(), e.getTextureYOffset()));
 			shader.loadTransformationMatrix(Utils.Dim3.createTransformationMatrix(e));
 			GL11.glDrawElements(GL11.GL_TRIANGLES, model.getVertexCount(), GL11.GL_UNSIGNED_INT, 0);			
 		}

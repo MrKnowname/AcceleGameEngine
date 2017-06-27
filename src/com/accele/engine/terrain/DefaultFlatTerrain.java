@@ -16,7 +16,7 @@ public class DefaultFlatTerrain extends Terrain {
 	
 	public DefaultFlatTerrain(Engine engine, String registryID, String localizedID, float size, int vertexCount,
 			int gridX, int gridZ, TerrainTexture texture, Texture blendMap, Light light) {
-		super(engine, registryID, localizedID, size, vertexCount, gridX, gridZ, null);
+		super(engine, registryID, localizedID, size, vertexCount, gridX, gridZ, null, null);
 		model = new TerrainModel(engine, Utils.Dim3.generateFlatTerrainModel(registryID + "_model", localizedID + "_model", engine.getModelLoader(), size, vertexCount), texture, blendMap);
 		shader = (TerrainShader) engine.getRegistry().getShader("internal:terrain");
 		this.light = light;

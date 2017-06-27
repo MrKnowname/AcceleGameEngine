@@ -17,6 +17,7 @@ import com.accele.engine.model.TexturedModel;
 import com.accele.engine.property.Property;
 import com.accele.engine.state.State;
 import com.accele.engine.terrain.DefaultTerrainWithHeightMap;
+import com.accele.engine.terrain.Terrain;
 import com.accele.engine.util.Batch;
 import com.accele.engine.util.Resource;
 import com.accele.engine.util.Utils;
@@ -34,7 +35,7 @@ public class Test {
 	}
 	
 	public static void main(String[] args) {
-		System.setProperty("org.lwjgl.librarypath", "C:/Users/MrKnowname/Desktop/BesiegeTest/lib/native/");
+		System.setProperty("org.lwjgl.librarypath", "/Users/MrKnowname/Desktop/BesiegeTest/lib/native/");
 		
 		new Test();
 	}
@@ -52,12 +53,12 @@ public class Test {
 			Player player;
 			engine.getRegistry().register(new TerrainTexture("acl.test.texture.terrain0", "terrain0", new Resource("res/grass.png", Utils.DEFAULT_TEXTURE_LOADER), new Resource("res/flowers.png", Utils.DEFAULT_TEXTURE_LOADER), new Resource("res/mud.png", Utils.DEFAULT_TEXTURE_LOADER), new Resource("res/path.png", Utils.DEFAULT_TEXTURE_LOADER)));
 			engine.getRegistry().register(new Texture("acl.test.texture.blendMap", "blendMap", new Resource("res/blendMap.png", Utils.DEFAULT_TEXTURE_LOADER)));
-			engine.getRegistry().register(texture = new ModelTexture("acl.test.texture.default", "default", new Resource("res/stall_texture.png", Utils.DEFAULT_TEXTURE_LOADER), 10, 1, false, false));
+			engine.getRegistry().register(texture = new ModelTexture("acl.test.texture.default", "default", new Resource("res/stall_texture.png", Utils.DEFAULT_TEXTURE_LOADER), 10, 1, false, false, 1));
 			engine.getRegistry().register(new EntityImpl(engine, "acl.test.entity.impl", "impl", new Vector3f(0, -5, -25), 0, 0, 0, 1, new TexturedModel(engine, engine.getModelLoader().loadModel("acl.test.model.stall", "stall", new Resource("res/stall.obj", Utils.DEFAULT_MODEL_LOADER)), texture)));
 			engine.getRegistry().registerAll(player = new Player(engine, "acl.test.entity.player", "player", new Vector3f(0, -5, -25), 0, 0, 0, 1, new TexturedModel(engine, engine.getModelLoader().loadModel("acl.test.model.person", "person", new Resource("res/person.obj", Utils.DEFAULT_MODEL_LOADER)), texture), sun));
 			engine.getRegistry().registerAll(new DefaultEntityCamera(player));
-			engine.getRegistry().register(new DefaultTerrainWithHeightMap(engine, "acl.test.thm", "thm", 800, 128, 0, 0, (TerrainTexture) engine.getRegistry().getTexture("terrain0"), engine.getRegistry().getTexture("blendMap"), new Resource("res/heightMap.png", Utils.DEFAULT_IMAGE_LOADER), sun));
-			engine.getRegistry().register(new DefaultTerrainWithHeightMap(engine, "acl.test.thm", "thm", 800, 128, 1, 0, (TerrainTexture) engine.getRegistry().getTexture("terrain0"), engine.getRegistry().getTexture("blendMap"), new Resource("res/heightMap.png", Utils.DEFAULT_IMAGE_LOADER), sun));
+			engine.getRegistry().register(new DefaultTerrainWithHeightMap(engine, "acl.test.thm", "thm", 800, 128, 0, 0, (TerrainTexture) engine.getRegistry().getTexture("terrain0"), engine.getRegistry().getTexture("blendMap"), new Resource("res/grayscale.png", Utils.DEFAULT_IMAGE_LOADER), sun));
+			engine.getRegistry().register(new DefaultTerrainWithHeightMap(engine, "acl.test.thm", "thm", 800, 128, 1, 0, (TerrainTexture) engine.getRegistry().getTexture("terrain0"), engine.getRegistry().getTexture("blendMap"), new Resource("res/grayscale.png", Utils.DEFAULT_IMAGE_LOADER), sun));
 		}
 
 		@Override
@@ -108,7 +109,7 @@ public class Test {
 		
 		public EntityImpl(Engine engine, String registryID, String localizedID, Vector3f pos, float xRot, float yRot,
 				float zRot, float scale, TexturedModel model) {
-			super(engine, registryID, localizedID, pos, xRot, yRot, zRot, scale, model, engine.getRegistry().getShader("internal:static"));
+			super(engine, registryID, localizedID, pos, xRot, yRot, zRot, scale, model, engine.getRegistry().getShader("internal:static"), 0);
 			this.light = new Light("acl.test.light.l1", "l1", new Vector3f(3000, 2000, 2000), new Vector3f(1, 1, 1));
 		}
 
@@ -136,7 +137,6 @@ public class Test {
 		private static final float TURN_SPEED = 160f;
 		private static final float GRAVITY = -50f;
 		private static final float JUMP_POWER = 30;
-		private static final float TERRAIN_HEIGHT = 0;
 		
 		private Light light;
 		private float currentSpeed;
@@ -147,7 +147,7 @@ public class Test {
 		
 		public Player(Engine engine, String registryID, String localizedID, Vector3f pos, float xRot, float yRot,
 				float zRot, float scale, TexturedModel model, Light light) {
-			super(engine, registryID, localizedID, pos, xRot, yRot, zRot, scale, model, engine.getRegistry().getShader("internal:static"));
+			super(engine, registryID, localizedID, pos, xRot, yRot, zRot, scale, model, engine.getRegistry().getShader("internal:static"), 0);
 			this.light = light;
 			this.secondsPerFrame = engine.getRegistry().getProperty("internal:secondsPerFrame");
 		}
@@ -162,9 +162,11 @@ public class Test {
 			((Vector3f) pos).z += dz;
 			currentUpSpeed += GRAVITY * (float) secondsPerFrame.get();
 			((Vector3f) pos).y += currentUpSpeed * (float) secondsPerFrame.get();
-			if (((Vector3f) pos).y < TERRAIN_HEIGHT) {
+			Terrain t = Utils.Dim3.getTerrainBelowEntity(engine.getTerrainHandler().getTerrains(), this);
+			float terrainHeight = t == null ? 0 : t.getHeight(((Vector3f) pos).x, ((Vector3f) pos).z);
+			if (((Vector3f) pos).y < terrainHeight) {
 				currentUpSpeed = 0;
-				((Vector3f) pos).y = TERRAIN_HEIGHT;
+				((Vector3f) pos).y = terrainHeight;
 				airborne = false;
 			}
 		}

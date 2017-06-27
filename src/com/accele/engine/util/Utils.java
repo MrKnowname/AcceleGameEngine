@@ -186,6 +186,14 @@ public final class Utils {
 	
 	private Utils() {}
 	
+	public static float barryCentric(Vector3f p1, Vector3f p2, Vector3f p3, Vector2f pos) {
+		float det = (p2.z - p3.z) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.z - p3.z);
+		float l1 = ((p2.z - p3.z) * (pos.x - p3.x) + (p3.x - p2.x) * (pos.y - p3.z)) / det;
+		float l2 = ((p3.z - p1.z) * (pos.x - p3.x) + (p1.x - p3.x) * (pos.y - p3.z)) / det;
+		float l3 = 1.0f - l1 - l2;
+		return l1 * p1.y + l2 * p2.y + l3 * p3.y;
+	}
+	
 	public static int[] toIntArray(List<Integer> list) {
 		int[] result = new int[list.size()];
 		for (int i = 0; i < result.length; i++)
@@ -356,15 +364,15 @@ public final class Utils {
 			return matrix;
 		}
 		
-		public static RawModel generateTerrainModel(String registryID, String localizedID, ModelLoader loader, Resource heightMap, float size) {
+		public static ObjectPair<RawModel, float[][]> generateTerrainModel(String registryID, String localizedID, ModelLoader loader, Resource heightMap, float size) {
 			return generateTerrainModel(registryID, localizedID, loader, heightMap, MAX_TERRAIN_PIXEL_COLOR, MAX_TERRAIN_HEIGHT, size);
 		}
 		
-		public static RawModel generateTerrainModel(String registryID, String localizedID, ModelLoader loader, Resource heightMap, float maxPixelColor, float maxHeight, float size) {
+		public static ObjectPair<RawModel, float[][]> generateTerrainModel(String registryID, String localizedID, ModelLoader loader, Resource heightMap, float maxPixelColor, float maxHeight, float size) {
 			heightMap.load();
 			
 			int vertexCount = ((BufferedImage) heightMap.getValue()).getHeight();
-			
+			float[][] heights = new float[vertexCount][vertexCount];
 			int count = vertexCount * vertexCount;
 			float[] vertices = new float[count * 3];
 			float[] normals = new float[count * 3];
@@ -374,7 +382,9 @@ public final class Utils {
 			for (int i = 0; i < vertexCount; i++) {
 				for (int j = 0; j < vertexCount; j++) {
 					vertices[vertexPointer * 3] = (float) j / ((float) vertexCount - 1) * size;
-					vertices[vertexPointer * 3 + 1] = getTerrainHeight(j, i, (BufferedImage) heightMap.getValue(), maxPixelColor, maxHeight);
+					float height = getTerrainHeight(j, i, (BufferedImage) heightMap.getValue(), maxPixelColor, maxHeight);
+					heights[j][i] = height;
+					vertices[vertexPointer * 3 + 1] = height;
 					vertices[vertexPointer * 3 + 2] = (float) i / ((float) vertexCount - 1) * size;
 					Vector3f normal = calculateNormal(j, i, (BufferedImage) heightMap.getValue(), maxPixelColor, maxHeight);
 					normals[vertexPointer * 3] = normal.x;
@@ -401,7 +411,7 @@ public final class Utils {
 				}
 			}
 
-			return loader.loadModel(registryID, localizedID, vertices, indices, textureCoords, normals);
+			return new ObjectPair<>(loader.loadModel(registryID, localizedID, vertices, indices, textureCoords, normals), heights);
 		}
 		
 		private static Vector3f calculateNormal(int x, int z, BufferedImage image, float maxPixelColor, float maxHeight) {
@@ -464,6 +474,15 @@ public final class Utils {
 		
 		public static void disableCulling() {
 			GL11.glDisable(GL11.GL_CULL_FACE);
+		}
+		
+		public static Terrain getTerrainBelowEntity(Terrain[] terrains, Entity3D entity) {
+			for (Terrain t : terrains) {
+				if (inRange(((Vector3f) entity.getPos()).x, t.getX(), t.getX() + t.getSize()) && inRange(((Vector3f) entity.getPos()).z, t.getZ(), t.getZ() + t.getSize()))
+					return t;
+			}
+			
+			return null;
 		}
 		
 	}
