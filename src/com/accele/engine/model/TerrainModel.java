@@ -1,25 +1,22 @@
 package com.accele.engine.model;
 
+import com.accele.engine.core.Engine;
 import com.accele.engine.gfx.TerrainTexture;
 import com.accele.engine.gfx.Texture;
 
-public class TerrainModel {
+public class TerrainModel extends Model {
 
-	private RawModel model;
 	private TerrainTexture texture;
 	private Texture blendMap;
 		
-	public TerrainModel(ModelLoader loader, RawModel model, TerrainTexture texture, Texture blendMap) {
-		this.model = model;
+	public TerrainModel(Engine engine, RawModel model, TerrainTexture texture, Texture blendMap) {
+		super(model.registryID, model.localizedID, model.vaoID, model.vertexCount);
+		
 		this.texture = texture;
 		this.blendMap = blendMap;
 		
-		loader.addTexture(texture);
-		loader.addTexture(blendMap);
-	}
-
-	public RawModel getRawModel() {
-		return model;
+		engine.getModelLoader().addTexture(texture);
+		engine.getModelLoader().addTexture(blendMap);
 	}
 	
 	public TerrainTexture getTexture() {

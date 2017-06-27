@@ -356,11 +356,11 @@ public final class Utils {
 			return matrix;
 		}
 		
-		public static RawModel generateTerrainModel(ModelLoader loader, Resource heightMap, float size) {
-			return generateTerrainModel(loader, heightMap, MAX_TERRAIN_PIXEL_COLOR, MAX_TERRAIN_HEIGHT, size);
+		public static RawModel generateTerrainModel(String registryID, String localizedID, ModelLoader loader, Resource heightMap, float size) {
+			return generateTerrainModel(registryID, localizedID, loader, heightMap, MAX_TERRAIN_PIXEL_COLOR, MAX_TERRAIN_HEIGHT, size);
 		}
 		
-		public static RawModel generateTerrainModel(ModelLoader loader, Resource heightMap, float maxPixelColor, float maxHeight, float size) {
+		public static RawModel generateTerrainModel(String registryID, String localizedID, ModelLoader loader, Resource heightMap, float maxPixelColor, float maxHeight, float size) {
 			heightMap.load();
 			
 			int vertexCount = ((BufferedImage) heightMap.getValue()).getHeight();
@@ -401,7 +401,7 @@ public final class Utils {
 				}
 			}
 
-			return loader.loadToVAO(vertices, indices, textureCoords, normals);
+			return loader.loadModel(registryID, localizedID, vertices, indices, textureCoords, normals);
 		}
 		
 		private static Vector3f calculateNormal(int x, int z, BufferedImage image, float maxPixelColor, float maxHeight) {
@@ -418,7 +418,7 @@ public final class Utils {
 			return ((image.getRGB(x, z) + (maxPixelColor / 2f)) / (maxPixelColor / 2f)) * maxHeight;
 		}
 		
-		public static RawModel generateFlatTerrainModel(ModelLoader loader, float size, int vertexCount) {
+		public static RawModel generateFlatTerrainModel(String registryID, String localizedID, ModelLoader loader, float size, int vertexCount) {
 			int count = vertexCount * vertexCount;
 			float[] vertices = new float[count * 3];
 			float[] normals = new float[count * 3];
@@ -454,7 +454,7 @@ public final class Utils {
 				}
 			}
 
-			return loader.loadToVAO(vertices, indices, textureCoords, normals);
+			return loader.loadModel(registryID, localizedID, vertices, indices, textureCoords, normals);
 		}
 		
 		public static void enableCulling() {

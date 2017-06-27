@@ -1,21 +1,17 @@
 package com.accele.engine.model;
 
+import com.accele.engine.core.Engine;
 import com.accele.engine.gfx.ModelTexture;
 
-public class TexturedModel {
+public class TexturedModel extends Model {
 
-	private RawModel rawModel;
 	private ModelTexture texture;
 	
-	public TexturedModel(ModelLoader loader, RawModel rawModel, ModelTexture texture) {
-		this.rawModel = rawModel;
+	public TexturedModel(Engine engine, RawModel model, ModelTexture texture) {
+		super(model.registryID, model.localizedID, model.vaoID, model.vertexCount);
 		this.texture = texture;
 		
-		loader.addTexture(texture);
-	}
-	
-	public RawModel getRawModel() {
-		return rawModel;
+		engine.getModelLoader().addTexture(texture);
 	}
 	
 	public ModelTexture getTexture() {

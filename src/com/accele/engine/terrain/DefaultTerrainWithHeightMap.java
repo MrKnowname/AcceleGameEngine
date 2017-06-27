@@ -18,7 +18,7 @@ public class DefaultTerrainWithHeightMap extends Terrain {
 	public DefaultTerrainWithHeightMap(Engine engine, String registryID, String localizedID, float size,
 			int vertexCount, int gridX, int gridZ, TerrainTexture texture, Texture blendMap, Resource heightMap, Light light) {
 		super(engine, registryID, localizedID, size, vertexCount, gridX, gridZ, null);
-		model = new TerrainModel(engine.getModelLoader(), Utils.Dim3.generateTerrainModel(engine.getModelLoader(), heightMap, size), texture, blendMap);
+		model = new TerrainModel(engine, Utils.Dim3.generateTerrainModel(registryID + "_model", localizedID + "_model", engine.getModelLoader(), heightMap, size), texture, blendMap);
 		shader = (TerrainShader) engine.getRegistry().getShader("internal:terrain");
 		this.light = light;
 	}

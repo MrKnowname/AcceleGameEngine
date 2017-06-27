@@ -26,22 +26,22 @@ public class ModelLoader {
 		textures = new ArrayList<>();
 	}
 	
-	public RawModel loadToVAO(float[] positions, int[] indices, float[] textureCoords, float[] normals) {
+	public RawModel loadModel(String registryID, String localizedID, float[] positions, int[] indices, float[] textureCoords, float[] normals) {
 		int vaoID = createVAO();
 		bindIndicesBuffer(indices);
 		storeDataInAttributeList(0, 3, positions);
 		storeDataInAttributeList(1, 2, textureCoords);
 		storeDataInAttributeList(2, 3, normals);
 		unbindVAO();
-		return new RawModel(vaoID, indices.length);
+		return new RawModel(registryID, localizedID, vaoID, indices.length);
 	}
 	
-	public RawModel loadToVAO(Resource model) {
+	public RawModel loadModel(String registryID, String localizedID, Resource model) {
 		model.load();
 		if (!(model.getValue() instanceof Object[]))
 			throw new IllegalArgumentException("ResourceError: Expected model resource value to be of type Object[], received " + model.getValue().getClass().getSimpleName() + ".");
 		Object[] data = (Object[]) model.getValue();
-		return loadToVAO((float[]) data[0], (int[]) data[1], (float[]) data[2], (float[]) data[3]);
+		return loadModel(registryID, localizedID, (float[]) data[0], (int[]) data[1], (float[]) data[2], (float[]) data[3]);
 	}
 	
 	public void addTexture(Texture texture) {

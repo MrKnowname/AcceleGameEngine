@@ -29,7 +29,7 @@ public class Test {
 		engine = new Engine(1280, 720, 1);
 		engine.getRegistry().getProperty("internal:title").set("Test AcceleEngine v" + engine.getRegistry().getProperty("internal:version").get());
 		engine.getRegistry().registerAll(new StateImpl(engine, "acl.test.state.impl", "impl"));
-		engine.getStateHandler().setCurrentState("impl", false, false);
+		engine.getStateHandler().setCurrentState("impl", false, true);
 		engine.run();
 	}
 	
@@ -41,20 +41,20 @@ public class Test {
 	
 	private static class StateImpl extends State implements KeyControllable {
 
-		Light sun;
+		private Light sun;
 		
 		public StateImpl(Engine engine, String registryID, String localizedID) {
 			super(engine, registryID, localizedID);
 			engine.getRegistry().getProperty("internal:shaderFogDensity").set(0.00000001f);
 			//engine.getRegistry().getProperty("internal:shaderFogGradient").set(0);
-			engine.getEntityHandler().setStaticShaderLight(sun = new Light(new Vector3f(3000, 2000, 2000), new Vector3f(1, 1, 1)));
+			engine.getEntityHandler().setStaticShaderLight(sun = new Light("acl.test.light.sun", "sun", new Vector3f(3000, 2000, 2000), new Vector3f(1, 1, 1)));
 			ModelTexture texture;
 			Player player;
 			engine.getRegistry().register(new TerrainTexture("acl.test.texture.terrain0", "terrain0", new Resource("res/grass.png", Utils.DEFAULT_TEXTURE_LOADER), new Resource("res/flowers.png", Utils.DEFAULT_TEXTURE_LOADER), new Resource("res/mud.png", Utils.DEFAULT_TEXTURE_LOADER), new Resource("res/path.png", Utils.DEFAULT_TEXTURE_LOADER)));
 			engine.getRegistry().register(new Texture("acl.test.texture.blendMap", "blendMap", new Resource("res/blendMap.png", Utils.DEFAULT_TEXTURE_LOADER)));
 			engine.getRegistry().register(texture = new ModelTexture("acl.test.texture.default", "default", new Resource("res/stall_texture.png", Utils.DEFAULT_TEXTURE_LOADER), 10, 1, false, false));
-			engine.getRegistry().register(new EntityImpl(engine, "acl.test.entity.impl", "impl", new Vector3f(0, -5, -25), 0, 0, 0, 1, new TexturedModel(engine.getModelLoader(), engine.getModelLoader().loadToVAO(new Resource("res/stall.obj", Utils.DEFAULT_MODEL_LOADER)), texture)));
-			engine.getRegistry().registerAll(player = new Player(engine, "acl.test.entity.player", "player", new Vector3f(0, -5, -25), 0, 0, 0, 1, new TexturedModel(engine.getModelLoader(), engine.getModelLoader().loadToVAO(new Resource("res/person.obj", Utils.DEFAULT_MODEL_LOADER)), texture), sun));
+			engine.getRegistry().register(new EntityImpl(engine, "acl.test.entity.impl", "impl", new Vector3f(0, -5, -25), 0, 0, 0, 1, new TexturedModel(engine, engine.getModelLoader().loadModel("acl.test.model.stall", "stall", new Resource("res/stall.obj", Utils.DEFAULT_MODEL_LOADER)), texture)));
+			engine.getRegistry().registerAll(player = new Player(engine, "acl.test.entity.player", "player", new Vector3f(0, -5, -25), 0, 0, 0, 1, new TexturedModel(engine, engine.getModelLoader().loadModel("acl.test.model.person", "person", new Resource("res/person.obj", Utils.DEFAULT_MODEL_LOADER)), texture), sun));
 			engine.getRegistry().registerAll(new DefaultEntityCamera(player));
 			engine.getRegistry().register(new DefaultTerrainWithHeightMap(engine, "acl.test.thm", "thm", 800, 128, 0, 0, (TerrainTexture) engine.getRegistry().getTexture("terrain0"), engine.getRegistry().getTexture("blendMap"), new Resource("res/heightMap.png", Utils.DEFAULT_IMAGE_LOADER), sun));
 			engine.getRegistry().register(new DefaultTerrainWithHeightMap(engine, "acl.test.thm", "thm", 800, 128, 1, 0, (TerrainTexture) engine.getRegistry().getTexture("terrain0"), engine.getRegistry().getTexture("blendMap"), new Resource("res/heightMap.png", Utils.DEFAULT_IMAGE_LOADER), sun));
@@ -109,7 +109,7 @@ public class Test {
 		public EntityImpl(Engine engine, String registryID, String localizedID, Vector3f pos, float xRot, float yRot,
 				float zRot, float scale, TexturedModel model) {
 			super(engine, registryID, localizedID, pos, xRot, yRot, zRot, scale, model, engine.getRegistry().getShader("internal:static"));
-			this.light = new Light(new Vector3f(3000, 2000, 2000), new Vector3f(1, 1, 1));
+			this.light = new Light("acl.test.light.l1", "l1", new Vector3f(3000, 2000, 2000), new Vector3f(1, 1, 1));
 		}
 
 		@Override

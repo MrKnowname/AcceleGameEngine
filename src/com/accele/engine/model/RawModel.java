@@ -1,21 +1,9 @@
 package com.accele.engine.model;
 
-public class RawModel {
+public final class RawModel extends Model {
 
-	private int vaoID;
-	private int vertexCount;
-	
-	public RawModel(int vaoID, int vertexCount) {
-		this.vaoID = vaoID;
-		this.vertexCount = vertexCount;
-	}
-
-	public int getVaoID() {
-		return vaoID;
-	}
-
-	public int getVertexCount() {
-		return vertexCount;
+	protected RawModel(String registryID, String localizedID, int vaoID, int vertexCount) {
+		super(registryID, localizedID, vaoID, vertexCount);
 	}
 	
 }

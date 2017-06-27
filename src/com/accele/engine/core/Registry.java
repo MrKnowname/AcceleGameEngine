@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import com.accele.engine.entity.Entity;
 import com.accele.engine.entity.EntityHandler;
 import com.accele.engine.gfx.Camera;
+import com.accele.engine.gfx.Light;
 import com.accele.engine.gfx.StoredFont;
 import com.accele.engine.gfx.Texture;
 import com.accele.engine.gfx.shader.Shader;
@@ -17,11 +18,13 @@ import com.accele.engine.io.KeyControllable;
 import com.accele.engine.io.KeyInput;
 import com.accele.engine.io.MouseControllable;
 import com.accele.engine.io.MouseInput;
+import com.accele.engine.model.Model;
 import com.accele.engine.property.Property;
 import com.accele.engine.sfx.Music;
 import com.accele.engine.sfx.SFX;
 import com.accele.engine.state.State;
 import com.accele.engine.terrain.Terrain;
+import com.accele.engine.terrain.TerrainHandler;
 
 /**
  * This class acts as a storage medium for all objects essential to the engine.
@@ -63,6 +66,8 @@ public final class Registry {
 	private Map<String, Texture> textures;
 	private Map<String, StoredFont> fonts;
 	private Map<String, Shader> shaders;
+	private Map<String, Model> models;
+	private Map<String, Light> lights;
 	
 	/**
 	 * Creates a new <tt>Registry</tt> instance.
@@ -80,6 +85,8 @@ public final class Registry {
 		this.textures = new HashMap<>();
 		this.fonts = new HashMap<>();
 		this.shaders = new HashMap<>();
+		this.models = new HashMap<>();
+		this.lights = new HashMap<>();
 	}
 	
 	/**
@@ -239,6 +246,28 @@ public final class Registry {
 	 */
 	public <T extends Terrain> void register(T entry) {
 		engine.getTerrainHandler().addTerrain(entry);
+	}
+	
+	/**
+	 * Registers the given instance of {@link Model} to the appropriate maps.
+	 * @param <T> An implementation of <tt>Model</tt>
+	 * @param entry The entry to be added
+	 */
+	public <T extends Model> void register(T entry) {
+		if (register((Indexable) entry)) {
+			models.put(entry.getLocalizedID(), entry);
+		}
+	}
+	
+	/**
+	 * Registers the given instance of {@link Light} to the appropriate maps.
+	 * @param <T> An implementation of <tt>Light</tt>
+	 * @param entry The entry to be added
+	 */
+	public <T extends Light> void register(T entry) {
+		if (register((Indexable) entry)) {
+			lights.put(entry.getLocalizedID(), entry);
+		}
 	}
 	
 	/**
@@ -437,6 +466,46 @@ public final class Registry {
 			((MouseInput) inputs.get("acl_internal_mouse")).addController((MouseControllable) entry);
 	}
 	
+	/**
+	 * Registers the given instance of {@link Model} to the appropriate maps.
+	 * <p>
+	 * This method acts as a convenience method to replace the need to register a single object multiple times, 
+	 * specifically when the given object is an implementation of {@link KeyControllable} and/or {@link MouseControllable}
+	 * in addition to an implementation of a particular superclass.
+	 * </p>
+	 * @param <T> A subclass of <tt>Model</tt>
+	 * @param entry The entry to be added
+	 */
+	public <T extends Model> void registerAll(T entry) {
+		if (register((Indexable) entry)) {
+			models.put(entry.getLocalizedID(), entry);
+			if (entry instanceof KeyControllable)
+				((KeyInput) inputs.get("acl_internal_keyboard")).addController((KeyControllable) entry);
+			if (entry instanceof MouseControllable)
+				((MouseInput) inputs.get("acl_internal_mouse")).addController((MouseControllable) entry);
+		}
+	}
+	
+	/**
+	 * Registers the given instance of {@link Light} to the appropriate maps.
+	 * <p>
+	 * This method acts as a convenience method to replace the need to register a single object multiple times, 
+	 * specifically when the given object is an implementation of {@link KeyControllable} and/or {@link MouseControllable}
+	 * in addition to an implementation of a particular superclass.
+	 * </p>
+	 * @param <T> A subclass of <tt>Light</tt>
+	 * @param entry The entry to be added
+	 */
+	public <T extends Light> void registerAll(T entry) {
+		if (register((Indexable) entry)) {
+			lights.put(entry.getLocalizedID(), entry);
+			if (entry instanceof KeyControllable)
+				((KeyInput) inputs.get("acl_internal_keyboard")).addController((KeyControllable) entry);
+			if (entry instanceof MouseControllable)
+				((MouseInput) inputs.get("acl_internal_mouse")).addController((MouseControllable) entry);
+		}
+	}
+	
 	/** 
 	 * Retrieves the implementation of {@link Indexable} that has the given <tt>registryID</tt>.
 	 * <p>
@@ -513,6 +582,24 @@ public final class Registry {
 		return localizedID.startsWith("internal:") ? shaders.get("acl_internal_" + localizedID.replaceFirst("internal\\:", "")) : (shaders.get(localizedID) != null ? shaders.get(localizedID) : shaders.get("acl_internal_" + localizedID));
 	}
 	
+	/** 
+	 * Retrieves the implementation of {@link Model} that has the given <tt>localizedID</tt>.
+	 * @param localizedID The id of the desired entry
+	 * @return An instance of <tt>Model</tt>
+	 */
+	public Model getModel(String localizedID) {
+		return localizedID.startsWith("internal:") ? models.get("acl_internal_" + localizedID.replaceFirst("internal\\:", "")) : (models.get(localizedID) != null ? models.get(localizedID) : models.get("acl_internal_" + localizedID));
+	}
+	
+	/** 
+	 * Retrieves the implementation of {@link Light} that has the given <tt>localizedID</tt>.
+	 * @param localizedID The id of the desired entry
+	 * @return An instance of <tt>Light</tt>
+	 */
+	public Light getLight(String localizedID) {
+		return localizedID.startsWith("internal:") ? lights.get("acl_internal_" + localizedID.replaceFirst("internal\\:", "")) : (lights.get(localizedID) != null ? lights.get(localizedID) : lights.get("acl_internal_" + localizedID));
+	}
+	
 	/**
 	 * Gets a list of all registered entries and returns them as an {@link ArrayList} of {@link Indexable}.
 	 * @return An <tt>ArrayList</tt> of all entries
@@ -575,6 +662,22 @@ public final class Registry {
 	 */
 	public List<Shader> getAllShaders() {
 		return new ArrayList<>(shaders.values());
+	}
+	
+	/**
+	 * Gets a list of all registered instances of {@link Model} and returns them as an {@link ArrayList}.
+	 * @return An <tt>ArrayList</tt> of all instances of <tt>Model</tt>
+	 */
+	public List<Model> getAllModels() {
+		return new ArrayList<>(models.values());
+	}
+	
+	/**
+	 * Gets a list of all registered instances of {@link Light} and returns them as an {@link ArrayList}.
+	 * @return An <tt>ArrayList</tt> of all instances of <tt>Light</tt>
+	 */
+	public List<Light> getAllLights() {
+		return new ArrayList<>(lights.values());
 	}
 	
 	/**
@@ -762,6 +865,54 @@ public final class Registry {
 	 */
 	public List<String> getAllShaderLocalizedIDs() {
 		return shaders.values().stream().map(f -> {
+			if (f.getLocalizedID().startsWith("acl_internal_"))
+				return f.getLocalizedID().replaceFirst("acl_internal_", "");
+			else
+				return f.getLocalizedID();
+		}).collect(Collectors.toList());
+	}
+	
+	/**
+	 * Gets a list of <tt>registryID</tt>s of all registered instances of {@link Model} and returns them as a {@link List}.
+	 * @return A <tt>List</tt> of <tt>registryID</tt>s of all instances of <tt>Model</tt>
+	 */
+	public List<String> getAllModelRegistryIDs() {
+		return models.values().stream().map(f -> f.getRegistryID()).collect(Collectors.toList());
+	}
+	
+	/**
+	 * Gets a list of <tt>localizedID</tt>s of all registered instances of {@link Model} and returns them as a {@link List}.
+	 * <p>
+	 * Note: Any engine-defined entries will be returned without the "acl_internal_" prefix.
+	 * </p>
+	 * @return A <tt>List</tt> of <tt>localizedID</tt>s of all instances of <tt>Model</tt>
+	 */
+	public List<String> getAllModelLocalizedIDs() {
+		return models.values().stream().map(f -> {
+			if (f.getLocalizedID().startsWith("acl_internal_"))
+				return f.getLocalizedID().replaceFirst("acl_internal_", "");
+			else
+				return f.getLocalizedID();
+		}).collect(Collectors.toList());
+	}
+	
+	/**
+	 * Gets a list of <tt>registryID</tt>s of all registered instances of {@link Light} and returns them as a {@link List}.
+	 * @return A <tt>List</tt> of <tt>registryID</tt>s of all instances of <tt>Light</tt>
+	 */
+	public List<String> getAllLightRegistryIDs() {
+		return lights.values().stream().map(f -> f.getRegistryID()).collect(Collectors.toList());
+	}
+	
+	/**
+	 * Gets a list of <tt>localizedID</tt>s of all registered instances of {@link Light} and returns them as a {@link List}.
+	 * <p>
+	 * Note: Any engine-defined entries will be returned without the "acl_internal_" prefix.
+	 * </p>
+	 * @return A <tt>List</tt> of <tt>localizedID</tt>s of all instances of <tt>Light</tt>
+	 */
+	public List<String> getAllLightLocalizedIDs() {
+		return lights.values().stream().map(f -> {
 			if (f.getLocalizedID().startsWith("acl_internal_"))
 				return f.getLocalizedID().replaceFirst("acl_internal_", "");
 			else
