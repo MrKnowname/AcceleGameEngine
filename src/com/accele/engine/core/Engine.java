@@ -37,6 +37,7 @@ import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.opengl.PixelFormat;
 import org.lwjgl.opengl.Util;
+import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 import org.newdawn.slick.Color;
 
@@ -44,6 +45,8 @@ import com.accele.engine.entity.EntityHandler;
 import com.accele.engine.gfx.Camera;
 import com.accele.engine.gfx.Graphics;
 import com.accele.engine.gfx.StoredFont;
+import com.accele.engine.gfx.shader.GUIShader;
+import com.accele.engine.gfx.shader.SkyboxShader;
 import com.accele.engine.gfx.shader.StaticShader;
 import com.accele.engine.gfx.shader.TerrainShader;
 import com.accele.engine.io.IOHandler;
@@ -56,6 +59,7 @@ import com.accele.engine.property.PropertyHandler;
 import com.accele.engine.sfx.AudioHandler;
 import com.accele.engine.state.StateHandler;
 import com.accele.engine.terrain.TerrainHandler;
+import com.accele.engine.util.ModifiableObjectContainer;
 import com.accele.engine.util.Utils;
 
 /** 
@@ -104,32 +108,26 @@ public final class Engine {
 	 * @param gameType The dimensions that the game will be. 0 = 2D, 1 = 3D
 	 */
 	public Engine(int screenWidth, int screenHeight, String title, int gameType) {
-		registry = new Registry(this);
-		ioHandler = new IOHandler(this);
-		aHandler = new AudioHandler(this);
-		eHandler = new EntityHandler(this);
-		sHandler = new StateHandler(this);
-		tHandler = new TerrainHandler();
-		rand = ThreadLocalRandom.current();
-		modelLoader = new ModelLoader();
+		preInit();
 		
 		List<Property> internalProperties = new ArrayList<>();
 		
-		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.version", "acl_internal_version", "4.1.2", true, true, Optional.empty(), OperationLocation.DO_NOT_RUN)));
-		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.aspectRatio", "acl_internal_aspectRatio", (float) screenWidth / (float) screenHeight, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
-		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.screenWidth", "acl_internal_screenWidth", screenWidth, true, false, Optional.of((engine, value) -> {
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.version", "acl_internal_version", "4.1.2", true, true, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.aspectRatio", "acl_internal_aspectRatio", (float) screenWidth / (float) screenHeight, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.screenWidth", "acl_internal_screenWidth", screenWidth, true, false, Optional.of((engine, value) -> {
 			engine.getRegistry().getProperty("aspectRatio").set(((Integer) value).floatValue() / ((Integer) engine.getRegistry().getProperty("screenHeight").get()).floatValue());
 		}), OperationLocation.RUN_ON_SET)));
-		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.screenHeight", "acl_internal_screenHeight", screenHeight, true, false, Optional.of((engine, value) -> {
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.screenHeight", "acl_internal_screenHeight", screenHeight, true, false, Optional.of((engine, value) -> {
 			engine.getRegistry().getProperty("aspectRatio").set(((Integer) engine.getRegistry().getProperty("screenWidth").get()).floatValue() / ((Integer) value).floatValue());
 		}), OperationLocation.RUN_ON_SET)));
-		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.title", "acl_internal_title", title, true, false, Optional.of((engine, value) -> {
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.title", "acl_internal_title", title, true, false, Optional.of((engine, value) -> {
 			Display.setTitle((String) value);
 		}), OperationLocation.RUN_ON_SET)));
 		
-		init(internalProperties, gameType);
+		ModifiableObjectContainer<Matrix4f> projectionMatrix = new ModifiableObjectContainer<>(null);
+		init(internalProperties, gameType, projectionMatrix);
 		
-		graphics = new Graphics(this);
+		graphics = new Graphics(this, projectionMatrix.value);
 		pHandler = new PropertyHandler(this, internalProperties.toArray(new Property[internalProperties.size()]));
 	}
 	
@@ -202,24 +200,65 @@ public final class Engine {
 		this(640, 480, "", 0);
 	}
 	
-	/** Initializes various internal values utilized by the engine. */
-	private void init(List<Property> internalProperties, int gameType) {
-		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.gameType", "acl_internal_gameType", gameType, true, true, Optional.empty(), OperationLocation.DO_NOT_RUN)));
-		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.musicMute", "acl_internal_musicMute", false, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
-		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.soundMute", "acl_internal_soundMute", false, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
-		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.musicVolume", "acl_internal_musicVolume", 0f, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
-		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.soundVolume", "acl_internal_soundVolume", 0f, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
-		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.cycleIO", "acl_internal_cycleIO", true, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
-		registry.register(Utils.addProperty(internalProperties, propertyFPS = new Property(this, "acl.prop.fps", "acl_internal_fps", 0, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
-		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.showFPS", "acl_internal_showFPS", false, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
-		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.entityDuration", "acl_internal_entityDuration", true, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
-		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.entityCollision2D", "acl_internal_entityCollision2D", gameType == 0, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
-		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.entityCollision3D", "acl_internal_entityCollision3D", gameType == 1, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
-		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.shaderFogDensity", "acl_internal_shaderFogDensity", 0.007f, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
-		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.shaderFogGradient", "acl_internal_shaderFogGradient", 1.5f, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
-		registry.register(Utils.addProperty(internalProperties, new Property(this, "acl.prop.clearColor", "acl_internal_clearColor", new Vector3f(0.5f, 0.5f, 0.5f), true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
-		registry.register(Utils.addProperty(internalProperties, propertySecondsPerFrame = new Property(this, "acl.prop.secondsPerFrame", "acl_internal_secondsPerFrame", 0f, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
-		registry.register(Utils.addProperty(internalProperties, propertyTargetFPS = new Property(this, "acl.prop.targetFPS", "acl_internal_targetFPS", 60, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+	/**
+	 * Initializes various internal values utilized by the engine.
+	 * <p>
+	 * This is the primary stage of initialization and runs directly
+	 * before the {@code init} method.
+	 * </p>
+	 */
+	private void preInit() {
+		registry = new Registry(this);
+		ioHandler = new IOHandler(this);
+		aHandler = new AudioHandler(this);
+		eHandler = new EntityHandler(this);
+		sHandler = new StateHandler(this);
+		tHandler = new TerrainHandler();
+		rand = ThreadLocalRandom.current();
+		modelLoader = new ModelLoader();
+	}
+	
+	/**
+	 * Initializes various internal values utilized by the engine.
+	 * <p>
+	 * This method runs directly after the {@code preInit} method and
+	 * directly before the {@code postInit} method.
+	 * </p>
+	 * 
+	 * @param internalProperties The internal properties to initialize
+	 * @param gameType The type of game the engine is running
+	 * @param projectionMatrix The projection matrix for the engine
+	 */
+	private void init(List<Property> internalProperties, int gameType, ModifiableObjectContainer<Matrix4f> projectionMatrix) {
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.gameType", "acl_internal_gameType", gameType, true, true, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.musicMute", "acl_internal_musicMute", false, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.soundMute", "acl_internal_soundMute", false, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.musicVolume", "acl_internal_musicVolume", 0f, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.soundVolume", "acl_internal_soundVolume", 0f, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.cycleIO", "acl_internal_cycleIO", true, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+		registry.register(Utils.addAndReturn(internalProperties, propertyFPS = new Property(this, "acl.prop.fps", "acl_internal_fps", 0, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.showFPS", "acl_internal_showFPS", false, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.entityDuration", "acl_internal_entityDuration", true, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.entityCollision2D", "acl_internal_entityCollision2D", gameType == 0, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.entityCollision3D", "acl_internal_entityCollision3D", gameType == 1, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.shaderFogDensity", "acl_internal_shaderFogDensity", 0.007f, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.shaderFogGradient", "acl_internal_shaderFogGradient", 1.5f, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.clearColor", "acl_internal_clearColor", new Vector3f(0.5f, 0.5f, 0.5f), true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+		registry.register(Utils.addAndReturn(internalProperties, propertySecondsPerFrame = new Property(this, "acl.prop.secondsPerFrame", "acl_internal_secondsPerFrame", 0f, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+		registry.register(Utils.addAndReturn(internalProperties, propertyTargetFPS = new Property(this, "acl.prop.targetFPS", "acl_internal_targetFPS", 60, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.skyboxFogFadeUpperLimit", "acl_internal_skyboxFogFadeUpperLimit", 30.0f, true, false, Optional.of((engine, value) -> {
+			SkyboxShader shader = (SkyboxShader) engine.getRegistry().getShader("internal:skybox");
+			shader.start();
+			shader.loadUpperLimit((float) value);
+			shader.stop();
+		}), OperationLocation.RUN_ON_SET)));
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.skyboxFogFadeLowerLimit", "acl_internal_skyboxFogFadeLowerLimit", 0f, true, false, Optional.of((engine, value) -> {
+			SkyboxShader shader = (SkyboxShader) engine.getRegistry().getShader("internal:skybox");
+			shader.start();
+			shader.loadLowerLimit((float) value);
+			shader.stop();
+		}), OperationLocation.RUN_ON_SET)));
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.skyboxRotationSpeed", "acl_internal_skyboxRotationSpeed", 1f, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
 		
 		registry.register(new KeyInput(this));
 		registry.register(new MouseInput(this));
@@ -259,7 +298,6 @@ public final class Engine {
 				Display.create(new PixelFormat(), attribs);
 				Display.setTitle((String) registry.getProperty("internal:title").get());
 				Display.setResizable(false);
-				//Display.setVSyncEnabled(true);
 				
 				glEnable(GL_DEPTH_TEST);
 				Utils.Dim3.enableCulling();
@@ -272,22 +310,44 @@ public final class Engine {
 			e.printStackTrace();
 		}
 		
-		StaticShader staticShader = new StaticShader("acl.shader.static", "acl_internal_static");
+		projectionMatrix.value = Utils.Dim3.createProjectionMatrix(this);
+		
+		StaticShader staticShader = new StaticShader(this, "acl.shader.static", "acl_internal_static");
 		staticShader.start();
-		staticShader.loadProjectionMatrix(Utils.Dim3.createProjectionMatrix(this));
+		staticShader.loadProjectionMatrix(projectionMatrix.value);
 		staticShader.stop();
 		registry.register(staticShader);
-		TerrainShader terrainShader = new TerrainShader("acl.shader.terrain", "acl_internal_terrain");
+		TerrainShader terrainShader = new TerrainShader(this, "acl.shader.terrain", "acl_internal_terrain");
 		terrainShader.start();
-		terrainShader.loadProjectionMatrix(Utils.Dim3.createProjectionMatrix(this));
+		terrainShader.loadProjectionMatrix(projectionMatrix.value);
 		terrainShader.connectTextureUnits();
 		terrainShader.stop();
 		registry.register(terrainShader);
-		
+		registry.register(new GUIShader(this, "acl.shader.gui", "acl_internal_gui"));
+		SkyboxShader skyboxShader = new SkyboxShader(this, "acl.shader.skybox", "acl_internal_skybox");
+		skyboxShader.start();
+		skyboxShader.loadLimits((float) registry.getProperty("internal:skyboxFogFadeUpperLimit").get(), (float) registry.getProperty("internal:skyboxFogFadeLowerLimit").get());
+		skyboxShader.loadProjectionMatrix(projectionMatrix.value);
+		skyboxShader.stop();
+		registry.register(skyboxShader);
 		
 		registry.register(new StoredFont("acl.font.default", "acl_internal_default", new Font("Arial", 0, 24)));
 		
 		eHandler.init();
+	}
+	
+	/**
+	 * Initializes various internal values utilized by the engine.
+	 * <p>
+	 * Even though this method runs directly after the {@code init}
+	 * method, it is not called in the constructor but rather the
+	 * {@code run} method. This allows for any values that may need
+	 * to be initialized before the primary game loop but after the
+	 * primary initializations.
+	 * </p>
+	 */
+	private void postInit() {
+		
 	}
 	
 	/**
@@ -300,6 +360,8 @@ public final class Engine {
 	 * </p>
 	 */
 	public void run() {
+		postInit();
+		
 		Property cycleIO = registry.getProperty("internal:cycleIO");
 		Property showFPS = registry.getProperty("internal:showFPS");
 		Property gameType = registry.getProperty("internal:gameType");
@@ -380,7 +442,8 @@ public final class Engine {
 	/** Updates the internal frames per second counter and saves it to the {@code fps} property. */
 	private void updateFPS() {
 		long time = getTime();
-		propertySecondsPerFrame.set((time - lastFPS) / 1000f);
+		long result = time - lastFPS;
+		propertySecondsPerFrame.set(result != 0 ? result / 1000f : 0f);
 		propertyFPS.set((int) (1f / (float) propertySecondsPerFrame.get()));
 		lastFPS = time;
 	}

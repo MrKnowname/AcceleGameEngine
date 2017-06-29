@@ -33,7 +33,7 @@ public final class EntityHandler implements Tickable, Renderable {
 	private Map<TexturedModel, List<Entity3D>> batchEntities;
 	private Property entityCollision2D;
 	private StaticShader shader;
-	private Light staticShaderLight;
+	private List<Light> staticShaderLights;
 	
 	/**
 	 * Creates a new instance of {@code EntityHandler}.
@@ -46,6 +46,7 @@ public final class EntityHandler implements Tickable, Renderable {
 		this.engine = engine;
 		this.entities = new ArrayList<>();
 		this.batchEntities = new HashMap<>();
+		this.staticShaderLights = new ArrayList<>();
 	}
 	
 	/**
@@ -83,8 +84,8 @@ public final class EntityHandler implements Tickable, Renderable {
 		entities.forEach(a -> a.onRender(g));
 		batchEntities.forEach((a, b) -> {
 			shader.start();
-			if (staticShaderLight != null)
-				shader.loadLight(staticShaderLight);
+			if (!staticShaderLights.isEmpty())
+				shader.loadLights(staticShaderLights);
 			shader.loadViewMatrix(engine.getCamera());
 			g.drawEntitiesUsingModel(b.toArray(new Entity3D[b.size()]), a, shader);
 			shader.stop();
@@ -167,12 +168,12 @@ public final class EntityHandler implements Tickable, Renderable {
 		this.batchEntities.put(model, Arrays.asList(entities));
 	}
 	
-	public Light getStaticShaderLight() {
-		return staticShaderLight;
+	public List<Light> getStaticShaderLights() {
+		return staticShaderLights;
 	}
 	
-	public void setStaticShaderLight(Light staticShaderLight) {
-		this.staticShaderLight = staticShaderLight;
+	public void addStaticShaderLight(Light staticShaderLight) {
+		staticShaderLights.add(staticShaderLight);
 	}
 	
 }

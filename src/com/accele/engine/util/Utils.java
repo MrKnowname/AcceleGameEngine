@@ -27,7 +27,6 @@ import com.accele.engine.entity.Entity3D;
 import com.accele.engine.gfx.Camera;
 import com.accele.engine.model.ModelLoader;
 import com.accele.engine.model.RawModel;
-import com.accele.engine.property.Property;
 import com.accele.engine.sfx.internal.SFXException;
 import com.accele.engine.sfx.internal.SoundStore;
 import com.accele.engine.terrain.Terrain;
@@ -202,9 +201,9 @@ public final class Utils {
 		return result;
 	}
 	
-	public static <T extends Property> Property addProperty(List<T> properties, T property) {
-		properties.add(property);
-		return property;
+	public static <T> T addAndReturn(List<T> list, T value) {
+		list.add(value);
+		return value;
 	}
 	
 	public static float clamp(float var, float min, float max) {
@@ -216,6 +215,16 @@ public final class Utils {
 	}
 	
 	public static class Dim2 {
+		
+		public static Matrix4f createTransformationMatrix(Vector2f translation, Vector2f rotation, Vector2f scale) {
+			Matrix4f matrix = new Matrix4f();
+			matrix.setIdentity();
+			Matrix4f.translate(translation, matrix, matrix);
+			Matrix4f.rotate(rotation.x, new Vector3f(1, 0, 0), matrix, matrix);
+			Matrix4f.rotate(rotation.y, new Vector3f(0, 1, 0), matrix, matrix);
+			Matrix4f.scale(new Vector3f(scale.x, scale.y, 1f), matrix, matrix);
+			return matrix;
+		}
 		
 		public static boolean withinBounds(Rectangle boundee, Rectangle bounder, boolean boundeeHasOffset) {
 			if (boundeeHasOffset) {

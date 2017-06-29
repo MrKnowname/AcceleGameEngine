@@ -12,19 +12,22 @@ import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
 
+import com.accele.engine.core.Engine;
 import com.accele.engine.core.Indexable;
 
 public abstract class Shader implements Indexable {
 
 	private static FloatBuffer matrixBuffer = BufferUtils.createFloatBuffer(16);
 	
-	private String registryID;
-	private String localizedID;
-	private int programID;
-	private int vertexShaderID;
-	private int fragmentShaderID;
+	protected Engine engine;
+	protected String registryID;
+	protected String localizedID;
+	protected int programID;
+	protected int vertexShaderID;
+	protected int fragmentShaderID;
 	
-	public Shader(String registryID, String localizedID, String vertexFile, String fragmentFile) {
+	public Shader(Engine engine, String registryID, String localizedID, String vertexFile, String fragmentFile) {
+		this.engine = engine;
 		this.registryID = registryID;
 		this.localizedID = localizedID;
 		vertexShaderID = loadShader(vertexFile, GL20.GL_VERTEX_SHADER);

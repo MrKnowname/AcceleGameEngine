@@ -31,29 +31,85 @@ import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.util.Rectangle;
+import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
 import org.newdawn.slick.Color;
 
 import com.accele.engine.core.Engine;
 import com.accele.engine.entity.Entity3D;
+import com.accele.engine.gfx.gui.GUI;
+import com.accele.engine.gfx.shader.GUIShader;
 import com.accele.engine.gfx.shader.StaticShader;
 import com.accele.engine.gfx.shader.TerrainShader;
+import com.accele.engine.gfx.skybox.Skybox;
 import com.accele.engine.model.RawModel;
 import com.accele.engine.model.TexturedModel;
 import com.accele.engine.terrain.Terrain;
 import com.accele.engine.util.Utils;
 
 public final class Graphics {
+	
+	private static final float SIZE = 500f;
+	
+	private static final float[] VERTICES = {        
+		    -SIZE,  SIZE, -SIZE,
+		    -SIZE, -SIZE, -SIZE,
+		     SIZE, -SIZE, -SIZE,
+		     SIZE, -SIZE, -SIZE,
+		     SIZE,  SIZE, -SIZE,
+		    -SIZE,  SIZE, -SIZE,
 
+		    -SIZE, -SIZE,  SIZE,
+		    -SIZE, -SIZE, -SIZE,
+		    -SIZE,  SIZE, -SIZE,
+		    -SIZE,  SIZE, -SIZE,
+		    -SIZE,  SIZE,  SIZE,
+		    -SIZE, -SIZE,  SIZE,
+
+		     SIZE, -SIZE, -SIZE,
+		     SIZE, -SIZE,  SIZE,
+		     SIZE,  SIZE,  SIZE,
+		     SIZE,  SIZE,  SIZE,
+		     SIZE,  SIZE, -SIZE,
+		     SIZE, -SIZE, -SIZE,
+
+		    -SIZE, -SIZE,  SIZE,
+		    -SIZE,  SIZE,  SIZE,
+		     SIZE,  SIZE,  SIZE,
+		     SIZE,  SIZE,  SIZE,
+		     SIZE, -SIZE,  SIZE,
+		    -SIZE, -SIZE,  SIZE,
+
+		    -SIZE,  SIZE, -SIZE,
+		     SIZE,  SIZE, -SIZE,
+		     SIZE,  SIZE,  SIZE,
+		     SIZE,  SIZE,  SIZE,
+		    -SIZE,  SIZE,  SIZE,
+		    -SIZE,  SIZE, -SIZE,
+
+		    -SIZE, -SIZE, -SIZE,
+		    -SIZE, -SIZE,  SIZE,
+		     SIZE, -SIZE, -SIZE,
+		     SIZE, -SIZE, -SIZE,
+		    -SIZE, -SIZE,  SIZE,
+		     SIZE, -SIZE,  SIZE
+	};
+	
 	private Engine engine;
 	private StoredFont font;
 	private Color color;
+	private RawModel rect;
+	private RawModel cube;
+	private Matrix4f projectionMatrix;
 	
-	public Graphics(Engine engine) {
+	public Graphics(Engine engine, Matrix4f projectionMatrix) {
 		this.engine = engine;
 		this.font = engine.getRegistry().getFont("internal:default");
 		this.color = Color.white;
+		this.projectionMatrix = projectionMatrix;
+		engine.getRegistry().register(rect = engine.getModelLoader().loadModel("acl.model.rect", "acl_internal_rect", new float[] {-1, 1, -1, -1, 1, 1, 1, -1}, 2));
+		engine.getRegistry().register(cube = engine.getModelLoader().loadModel("acl.model.cube", "acl_internal_cube", VERTICES, 3));
 	}
 	
 	public void drawImage(Texture tex, int x, int y, int width, int height, float rotation) {
@@ -238,6 +294,24 @@ public final class Graphics {
 	
 	// ================================================== 3D Methods ================================================== //
 	
+	public void drawGUIComponent(GUI gui, GUIShader shader) {
+		shader.start();
+		GL30.glBindVertexArray(rect.getVaoID());
+		GL20.glEnableVertexAttribArray(0);
+		GL11.glEnable(GL11.GL_BLEND);
+		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+		GL11.glDisable(GL11.GL_DEPTH_TEST);
+		GL13.glActiveTexture(GL13.GL_TEXTURE0);
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, gui.getTexture().getImage().getTextureID());
+		shader.loadTransformationMatrix(Utils.Dim2.createTransformationMatrix(gui.getPos(), gui.getRotation(), gui.getScale()));
+		GL11.glDrawArrays(GL11.GL_TRIANGLE_STRIP, 0, rect.getVertexCount());
+		GL11.glEnable(GL11.GL_DEPTH_TEST);
+		GL11.glDisable(GL11.GL_BLEND);
+		GL20.glDisableVertexAttribArray(0);
+		GL30.glBindVertexArray(0);
+		shader.stop();
+	}
+	
 	public void drawModel(RawModel model) {
 		GL30.glBindVertexArray(model.getVaoID());
 		GL20.glEnableVertexAttribArray(0);
@@ -359,6 +433,22 @@ public final class Graphics {
 		GL20.glDisableVertexAttribArray(1);
 		GL20.glDisableVertexAttribArray(2);
 		GL30.glBindVertexArray(0);
+	}
+	
+	public void drawSkybox(Skybox skybox) {
+		GL30.glBindVertexArray(cube.getVaoID());
+		GL20.glEnableVertexAttribArray(0);
+		GL13.glActiveTexture(GL13.GL_TEXTURE0);
+		GL11.glBindTexture(GL13.GL_TEXTURE_CUBE_MAP, skybox.getDayMapTextureID());
+		GL13.glActiveTexture(GL13.GL_TEXTURE1);
+		GL11.glBindTexture(GL13.GL_TEXTURE_CUBE_MAP, skybox.getNightMapTextureID());
+		GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, cube.getVertexCount());
+		GL20.glDisableVertexAttribArray(0);
+		GL30.glBindVertexArray(0);
+	}
+	
+	public Matrix4f getProjectionMatrix() {
+		return projectionMatrix;
 	}
 	
 }
