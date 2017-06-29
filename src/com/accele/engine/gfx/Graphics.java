@@ -42,6 +42,7 @@ import com.accele.engine.gfx.gui.GUI;
 import com.accele.engine.gfx.shader.GUIShader;
 import com.accele.engine.gfx.shader.StaticShader;
 import com.accele.engine.gfx.shader.TerrainShader;
+import com.accele.engine.gfx.shader.WaterShader;
 import com.accele.engine.gfx.skybox.Skybox;
 import com.accele.engine.model.RawModel;
 import com.accele.engine.model.TexturedModel;
@@ -99,6 +100,7 @@ public final class Graphics {
 	private Engine engine;
 	private StoredFont font;
 	private Color color;
+	private RawModel guiRect;
 	private RawModel rect;
 	private RawModel cube;
 	private Matrix4f projectionMatrix;
@@ -108,7 +110,8 @@ public final class Graphics {
 		this.font = engine.getRegistry().getFont("internal:default");
 		this.color = Color.white;
 		this.projectionMatrix = projectionMatrix;
-		engine.getRegistry().register(rect = engine.getModelLoader().loadModel("acl.model.rect", "acl_internal_rect", new float[] {-1, 1, -1, -1, 1, 1, 1, -1}, 2));
+		engine.getRegistry().register(guiRect = engine.getModelLoader().loadModel("acl.model.guiRect", "acl_internal_guiRect", new float[] {-1, 1, -1, -1, 1, 1, 1, -1}, 2));
+		engine.getRegistry().register(rect = engine.getModelLoader().loadModel("acl.model.rect", "acl_internal_rect", new float[] { -1, -1, -1, 1, 1, -1, 1, -1, -1, 1, 1, 1 }, 2));
 		engine.getRegistry().register(cube = engine.getModelLoader().loadModel("acl.model.cube", "acl_internal_cube", VERTICES, 3));
 	}
 	
@@ -296,7 +299,7 @@ public final class Graphics {
 	
 	public void drawGUIComponent(GUI gui, GUIShader shader) {
 		shader.start();
-		GL30.glBindVertexArray(rect.getVaoID());
+		GL30.glBindVertexArray(guiRect.getVaoID());
 		GL20.glEnableVertexAttribArray(0);
 		GL11.glEnable(GL11.GL_BLEND);
 		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
@@ -304,7 +307,7 @@ public final class Graphics {
 		GL13.glActiveTexture(GL13.GL_TEXTURE0);
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, gui.getTexture().getImage().getTextureID());
 		shader.loadTransformationMatrix(Utils.Dim2.createTransformationMatrix(gui.getPos(), gui.getRotation(), gui.getScale()));
-		GL11.glDrawArrays(GL11.GL_TRIANGLE_STRIP, 0, rect.getVertexCount());
+		GL11.glDrawArrays(GL11.GL_TRIANGLE_STRIP, 0, guiRect.getVertexCount());
 		GL11.glEnable(GL11.GL_DEPTH_TEST);
 		GL11.glDisable(GL11.GL_BLEND);
 		GL20.glDisableVertexAttribArray(0);
@@ -443,6 +446,16 @@ public final class Graphics {
 		GL13.glActiveTexture(GL13.GL_TEXTURE1);
 		GL11.glBindTexture(GL13.GL_TEXTURE_CUBE_MAP, skybox.getNightMapTextureID());
 		GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, cube.getVertexCount());
+		GL20.glDisableVertexAttribArray(0);
+		GL30.glBindVertexArray(0);
+	}
+	
+	public void drawWaterQuad(float x, float z, float height, float size, WaterShader shader) {
+		shader.loadViewMatrix(engine.getCamera());
+		GL30.glBindVertexArray(rect.getVaoID());
+		GL20.glEnableVertexAttribArray(0);
+		shader.loadModelMatrix(Utils.Dim3.createTransformationMatrix(new Vector3f(x, height, z), 0, 0, 0, size));
+		GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, rect.getVertexCount());
 		GL20.glDisableVertexAttribArray(0);
 		GL30.glBindVertexArray(0);
 	}

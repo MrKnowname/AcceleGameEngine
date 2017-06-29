@@ -31,6 +31,7 @@ public class StaticShader extends Shader {
 	private int location_numRows;
 	private int location_offset;
 	private int[] location_attenuation;
+	private int location_celShadingLevels;
 	
 	public StaticShader(Engine engine, String registryID, String localizedID) {
 		super(engine, registryID, localizedID, VERTEX_FILE, FRAGMENT_FILE);
@@ -66,6 +67,8 @@ public class StaticShader extends Shader {
 			location_lightColor[i] = super.getUniformLocation("lightColor[" + i + "]");
 			location_attenuation[i] = super.getUniformLocation("attenuation[" + i + "]");
 		}
+		
+		location_celShadingLevels = super.getUniformLocation("celShadingLevels");
 	}
 	
 	public void loadTransformationMatrix(Matrix4f matrix) {
@@ -121,6 +124,10 @@ public class StaticShader extends Shader {
 	
 	public void loadOffset(Vector2f offset) {
 		super.loadUniformVector(location_offset, offset);
+	}
+	
+	public void loadCelShadingLevels(int celShadingLevels) {
+		super.loadUniformInt(location_celShadingLevels, celShadingLevels);
 	}
 
 }

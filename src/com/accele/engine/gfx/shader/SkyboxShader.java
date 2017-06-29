@@ -24,6 +24,7 @@ public class SkyboxShader extends Shader {
 	private int location_dayMap;
 	private int location_nightMap;
 	private int location_blendFactor;
+	private int location_celShadingLevels;
 	
 	public SkyboxShader(Engine engine, String registryID, String localizedID) {
 		super(engine, registryID, localizedID, VERTEX_FILE, FRAGMENT_FILE);
@@ -41,6 +42,7 @@ public class SkyboxShader extends Shader {
 		location_dayMap = super.getUniformLocation("dayMap");
 		location_nightMap = super.getUniformLocation("nightMap");
 		location_blendFactor = super.getUniformLocation("blendFactor");
+		location_celShadingLevels = super.getUniformLocation("celShadingLevels");
 	}
 
 	@Override
@@ -88,6 +90,10 @@ public class SkyboxShader extends Shader {
 	
 	public void loadBlendFactor(float blendFactor) {
 		super.loadUniformFloat(location_blendFactor, blendFactor);
+	}
+	
+	public void loadCelShadingLevels(int celShadingLevels) {
+		super.loadUniformInt(location_celShadingLevels, celShadingLevels);
 	}
 
 }

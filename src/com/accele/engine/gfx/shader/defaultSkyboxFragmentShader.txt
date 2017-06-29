@@ -10,11 +10,18 @@ uniform float blendFactor;
 uniform float upperLimit;
 uniform float lowerLimit;
 uniform vec3 fogColor;
+uniform int celShadingLevels;
 
 void main(void) {
 	vec4 texture1 = texture(dayMap, passTextureCoords);
 	vec4 texture2 = texture(nightMap, passTextureCoords);
 	vec4 finalColor = mix(texture1, texture2, blendFactor);
+	
+	if (celShadingLevels > 0) {
+		float amount = (finalColor.r + finalColor.g + finalColor.b) / 3.0;
+		amount = floor(amount * celShadingLevels) / celShadingLevels;
+		finalColor.rgb = amount * fogColor;
+	}
 	
 	float factor = (passTextureCoords.y - lowerLimit) / (upperLimit - lowerLimit);
 	factor = clamp(factor, 0.0, 1.0);

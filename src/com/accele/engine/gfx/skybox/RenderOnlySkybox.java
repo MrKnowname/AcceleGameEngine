@@ -20,26 +20,28 @@ public class RenderOnlySkybox extends Skybox {
 		tex1 = nightMapTextureID;
 	}
 
+	private static final int FACTOR = 1;
+	
 	@Override
 	public void onUpdate() {
-		time += (float) engine.getRegistry().getProperty("internal:secondsPerFrame").get() * 1000;
-		time %= 24000;
-		if (Utils.inRange(time, 0, 4999)) {
+		time += (float) engine.getRegistry().getProperty("internal:secondsPerFrame").get() * 1000 / FACTOR;
+		time %= 24000 / FACTOR;
+		if (Utils.inRange(time, 0, 4999 / FACTOR)) {
 			dayMapTextureID = tex1;
 			nightMapTextureID = tex1;
-			blendFactor = time / 5000;
-		} else if (Utils.inRange(time, 5000, 7999)) {
+			blendFactor = time / 5000 / FACTOR;
+		} else if (Utils.inRange(time, 5000 / FACTOR, 7999 / FACTOR)) {
 			dayMapTextureID = tex1;
 			nightMapTextureID = tex0;
-			blendFactor = (time - 5000) / (8000 - 5000);
-		} else if (Utils.inRange(time, 8000, 20999)) {
+			blendFactor = (time - 5000 / FACTOR) / (8000 / FACTOR - 5000 / FACTOR);
+		} else if (Utils.inRange(time, 8000 / FACTOR, 20999 / FACTOR)) {
 			dayMapTextureID = tex0;
 			nightMapTextureID = tex0;
-			blendFactor = (time - 8000) / (21000 - 8000);
+			blendFactor = (time - 8000 / FACTOR) / (21000 / FACTOR - 8000 / FACTOR);
 		} else {
 			dayMapTextureID = tex0;
 			nightMapTextureID = tex1;
-			blendFactor = (time - 21000) / (24000 - 21000);
+			blendFactor = (time - 21000 / FACTOR) / (24000 / FACTOR - 21000 / FACTOR);
 		}
 	}
 

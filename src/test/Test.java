@@ -15,6 +15,7 @@ import com.accele.engine.gfx.ModelTexture;
 import com.accele.engine.gfx.TerrainTexture;
 import com.accele.engine.gfx.Texture;
 import com.accele.engine.gfx.shader.StaticShader;
+import com.accele.engine.gfx.shader.WaterShader;
 import com.accele.engine.gfx.skybox.RenderOnlySkybox;
 import com.accele.engine.gfx.skybox.Skybox;
 import com.accele.engine.io.KeyControllable;
@@ -53,10 +54,12 @@ public class Test {
 		//private GUI gui;
 		private Skybox skybox;
 		private MousePicker mp;
+		private WaterShader waterShader;
 		
 		public StateImpl(Engine engine, String registryID, String localizedID) {
 			super(engine, registryID, localizedID);
 			lights = new ArrayList<>();
+			waterShader = (WaterShader) engine.getRegistry().getShader("internal:water");
 			//gui = new RenderOnlyGUI(engine, "acl.test.gui.rogui", "rogui", new Texture("acl.test.texture.grass", "grass", new Resource("res/grass.png", Utils.DEFAULT_TEXTURE_LOADER)), new Vector2f(1, 1), new Vector2f(0, 0), new Vector2f(1, 1));
 			engine.getRegistry().getProperty("internal:shaderFogDensity").set(0.0035f);
 			engine.getRegistry().getProperty("internal:shaderFogGradient").set(5f);
@@ -105,6 +108,8 @@ public class Test {
 					"res/nightRight.png", "res/nightLeft.png", "res/nightTop.png",
 					"res/nightBottom.png", "res/nightBack.png", "res/nightFront.png" 
 			}));
+			
+			//engine.getRegistry().getProperty("internal:celShadingLevels").set(3);
 		}
 
 		@Override
@@ -120,8 +125,11 @@ public class Test {
 		public void onRender(Graphics g) {
 			engine.getTerrainHandler().onRender(g);
 			engine.getEntityHandler().onRender(g);
-			//gui.onRender(g);
 			skybox.onRender(g);
+			waterShader.start();
+			g.drawWaterQuad(200, -150, 0, 50, waterShader);
+			waterShader.stop();
+			//gui.onRender(g);
 		}
 
 		@Override

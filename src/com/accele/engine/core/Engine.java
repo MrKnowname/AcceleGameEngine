@@ -46,9 +46,11 @@ import com.accele.engine.gfx.Camera;
 import com.accele.engine.gfx.Graphics;
 import com.accele.engine.gfx.StoredFont;
 import com.accele.engine.gfx.shader.GUIShader;
+import com.accele.engine.gfx.shader.Shader;
 import com.accele.engine.gfx.shader.SkyboxShader;
 import com.accele.engine.gfx.shader.StaticShader;
 import com.accele.engine.gfx.shader.TerrainShader;
+import com.accele.engine.gfx.shader.WaterShader;
 import com.accele.engine.io.IOHandler;
 import com.accele.engine.io.KeyInput;
 import com.accele.engine.io.MouseInput;
@@ -259,6 +261,20 @@ public final class Engine {
 			shader.stop();
 		}), OperationLocation.RUN_ON_SET)));
 		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.skyboxRotationSpeed", "acl_internal_skyboxRotationSpeed", 1f, true, false, Optional.empty(), OperationLocation.DO_NOT_RUN)));
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.celShadingLevels", "acl_internal_celShadingLevels", 0, true, false, Optional.of((engine, value) -> {
+			Shader shader = (StaticShader) engine.getRegistry().getShader("internal:static");
+			shader.start();
+			((StaticShader) shader).loadCelShadingLevels((int) value);
+			shader.stop();
+			shader = (TerrainShader) engine.getRegistry().getShader("internal:terrain");
+			shader.start();
+			((TerrainShader) shader).loadCelShadingLevels((int) value);
+			shader.stop();
+			shader = (SkyboxShader) engine.getRegistry().getShader("internal:skybox");
+			shader.start();
+			((SkyboxShader) shader).loadCelShadingLevels((int) value);
+			shader.stop();
+		}), OperationLocation.RUN_ON_SET)));
 		
 		registry.register(new KeyInput(this));
 		registry.register(new MouseInput(this));
@@ -295,7 +311,7 @@ public final class Engine {
 				ContextAttribs attribs = new ContextAttribs(3, 2).withForwardCompatible(true).withProfileCore(true);
 				
 				Display.setDisplayMode(new DisplayMode((int) registry.getProperty("internal:screenWidth").get(), (int) registry.getProperty("internal:screenHeight").get()));
-				Display.create(new PixelFormat(), attribs);
+				Display.create(new PixelFormat().withDepthBits(24), attribs);
 				Display.setTitle((String) registry.getProperty("internal:title").get());
 				Display.setResizable(false);
 				
@@ -330,6 +346,11 @@ public final class Engine {
 		skyboxShader.loadProjectionMatrix(projectionMatrix.value);
 		skyboxShader.stop();
 		registry.register(skyboxShader);
+		WaterShader waterShader = new WaterShader(this, "acl.shader.water", "acl_internal_water");
+		waterShader.start();
+		waterShader.loadProjectionMatrix(projectionMatrix.value);
+		waterShader.stop();
+		registry.register(waterShader);
 		
 		registry.register(new StoredFont("acl.font.default", "acl_internal_default", new Font("Arial", 0, 24)));
 		

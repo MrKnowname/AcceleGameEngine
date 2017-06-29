@@ -32,6 +32,7 @@ public class TerrainShader extends Shader {
 	private int location_bTexture;
 	private int location_blendMap;
 	private int[] location_attenuation;
+	private int location_celShadingLevels;
 	
 	public TerrainShader(Engine engine, String registryID, String localizedID) {
 		super(engine, registryID, localizedID, VERTEX_FILE, FRAGMENT_FILE);
@@ -69,6 +70,8 @@ public class TerrainShader extends Shader {
 			location_lightColor[i] = super.getUniformLocation("lightColor[" + i + "]");
 			location_attenuation[i] = super.getUniformLocation("attenuation[" + i + "]");
 		}
+		
+		location_celShadingLevels = super.getUniformLocation("celShadingLevels");
 	}
 	
 	public void loadTransformationMatrix(Matrix4f matrix) {
@@ -120,6 +123,10 @@ public class TerrainShader extends Shader {
 		super.loadUniformInt(location_gTexture, 2);
 		super.loadUniformInt(location_bTexture, 3);
 		super.loadUniformInt(location_blendMap, 4);
+	}
+	
+	public void loadCelShadingLevels(int celShadingLevels) {
+		super.loadUniformInt(location_celShadingLevels, celShadingLevels);
 	}
 
 }

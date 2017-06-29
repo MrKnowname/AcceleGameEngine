@@ -26,10 +26,10 @@ public class DefaultEntityCamera extends Camera implements MouseControllable {
 		if (lDown) {
 			float pitchChange = Mouse.getDY() * 0.1f;
 			pitch -= pitchChange;
-			if (pitch < 0)
+			/*if (pitch < 0)
 				pitch = 0;
 			else if (pitch > 90)
-				pitch = 90;
+				pitch = 90;*/
 		}
 		if (rDown) {
 			float angleChange = Mouse.getDX() * 0.3f;
