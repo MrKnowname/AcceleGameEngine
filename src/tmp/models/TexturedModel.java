@@ -3,21 +3,22 @@ package tmp.models;
 import tmp.textures.ModelTexture;
 
 public class TexturedModel {
-
-	private RawModel model;
-	private ModelTexture texture;
 	
-	public TexturedModel(RawModel model, ModelTexture texture) {
-		this.model = model;
+	private RawModel rawModel;
+	private ModelTexture texture;
+
+	
+	public TexturedModel(RawModel model, ModelTexture texture){
+		this.rawModel = model;
 		this.texture = texture;
 	}
-	
-	public RawModel getModel() {
-		return model;
+
+	public RawModel getRawModel() {
+		return rawModel;
 	}
-	
+
 	public ModelTexture getTexture() {
 		return texture;
 	}
-	
+
 }

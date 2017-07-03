@@ -78,7 +78,7 @@ public class ModelLoader {
 	}
 	
 	public void addTexture(Texture texture) {
-		textures.add(texture.getImage().getTextureID());
+		textures.add(texture.getTextureID());
 	}
 	
 	public void clear() {

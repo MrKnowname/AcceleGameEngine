@@ -16,6 +16,12 @@ public class Texture implements Indexable {
 		this.image = (org.newdawn.slick.opengl.Texture) image.getValue();
 	}
 	
+	protected Texture(String registryID, String localizedID) {
+		this.registryID = registryID;
+		this.localizedID = localizedID;
+		this.image = null;
+	}
+	
 	@Override
 	public final String getRegistryID() {
 		return registryID;
@@ -26,8 +32,12 @@ public class Texture implements Indexable {
 		return localizedID;
 	}
 	
-	public final org.newdawn.slick.opengl.Texture getImage() {
+	public final org.newdawn.slick.opengl.Texture getInternal() {
 		return image;
+	}
+	
+	public int getTextureID() {
+		return image.getTextureID();
 	}
 
 }

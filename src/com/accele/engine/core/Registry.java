@@ -12,7 +12,9 @@ import com.accele.engine.gfx.Camera;
 import com.accele.engine.gfx.Light;
 import com.accele.engine.gfx.StoredFont;
 import com.accele.engine.gfx.Texture;
+import com.accele.engine.gfx.gui.GUI;
 import com.accele.engine.gfx.shader.Shader;
+import com.accele.engine.gfx.skybox.Skybox;
 import com.accele.engine.io.Input;
 import com.accele.engine.io.KeyControllable;
 import com.accele.engine.io.KeyInput;
@@ -68,6 +70,8 @@ public final class Registry {
 	private Map<String, Shader> shaders;
 	private Map<String, Model> models;
 	private Map<String, Light> lights;
+	private Map<String, GUI> guis;
+	private Map<String, Skybox> skyboxes;
 	
 	/**
 	 * Creates a new {@code Registry} instance.
@@ -87,6 +91,8 @@ public final class Registry {
 		this.shaders = new HashMap<>();
 		this.models = new HashMap<>();
 		this.lights = new HashMap<>();
+		this.guis = new HashMap<>();
+		this.skyboxes = new HashMap<>();
 	}
 	
 	/**
@@ -267,6 +273,28 @@ public final class Registry {
 	public <T extends Light> void register(T entry) {
 		if (register((Indexable) entry)) {
 			lights.put(entry.getLocalizedID(), entry);
+		}
+	}
+	
+	/**
+	 * Registers the given instance of {@link GUI} to the appropriate maps.
+	 * @param <T> An implementation of {@code GUI}
+	 * @param entry The entry to be added
+	 */
+	public <T extends GUI> void register(T entry) {
+		if (register((Indexable) entry)) {
+			guis.put(entry.getLocalizedID(), entry);
+		}
+	}
+	
+	/**
+	 * Registers the given instance of {@link Skybox} to the appropriate maps.
+	 * @param <T> An implementation of {@code Skybox}
+	 * @param entry The entry to be added
+	 */
+	public <T extends Skybox> void register(T entry) {
+		if (register((Indexable) entry)) {
+			skyboxes.put(entry.getLocalizedID(), entry);
 		}
 	}
 	
@@ -506,6 +534,46 @@ public final class Registry {
 		}
 	}
 	
+	/**
+	 * Registers the given instance of {@link GUI} to the appropriate maps.
+	 * <p>
+	 * This method acts as a convenience method to replace the need to register a single object multiple times, 
+	 * specifically when the given object is an implementation of {@link KeyControllable} and/or {@link MouseControllable}
+	 * in addition to an implementation of a particular superclass.
+	 * </p>
+	 * @param <T> A subclass of {@code GUI}
+	 * @param entry The entry to be added
+	 */
+	public <T extends GUI> void registerAll(T entry) {
+		if (register((Indexable) entry)) {
+			guis.put(entry.getLocalizedID(), entry);
+			if (entry instanceof KeyControllable)
+				((KeyInput) inputs.get("acl_internal_keyboard")).addController((KeyControllable) entry);
+			if (entry instanceof MouseControllable)
+				((MouseInput) inputs.get("acl_internal_mouse")).addController((MouseControllable) entry);
+		}
+	}
+	
+	/**
+	 * Registers the given instance of {@link Skybox} to the appropriate maps.
+	 * <p>
+	 * This method acts as a convenience method to replace the need to register a single object multiple times, 
+	 * specifically when the given object is an implementation of {@link KeyControllable} and/or {@link MouseControllable}
+	 * in addition to an implementation of a particular superclass.
+	 * </p>
+	 * @param <T> A subclass of {@code Skybox}
+	 * @param entry The entry to be added
+	 */
+	public <T extends Skybox> void registerAll(T entry) {
+		if (register((Indexable) entry)) {
+			skyboxes.put(entry.getLocalizedID(), entry);
+			if (entry instanceof KeyControllable)
+				((KeyInput) inputs.get("acl_internal_keyboard")).addController((KeyControllable) entry);
+			if (entry instanceof MouseControllable)
+				((MouseInput) inputs.get("acl_internal_mouse")).addController((MouseControllable) entry);
+		}
+	}
+	
 	/** 
 	 * Retrieves the implementation of {@link Indexable} that has the given {@code registryID}.
 	 * <p>
@@ -600,6 +668,24 @@ public final class Registry {
 		return localizedID.startsWith("internal:") ? lights.get("acl_internal_" + localizedID.replaceFirst("internal\\:", "")) : (lights.get(localizedID) != null ? lights.get(localizedID) : lights.get("acl_internal_" + localizedID));
 	}
 	
+	/** 
+	 * Retrieves the implementation of {@link GUI} that has the given {@code localizedID}.
+	 * @param localizedID The id of the desired entry
+	 * @return An instance of {@code GUI}
+	 */
+	public GUI getGUI(String localizedID) {
+		return localizedID.startsWith("internal:") ? guis.get("acl_internal_" + localizedID.replaceFirst("internal\\:", "")) : (guis.get(localizedID) != null ? guis.get(localizedID) : guis.get("acl_internal_" + localizedID));
+	}
+	
+	/** 
+	 * Retrieves the implementation of {@link Skybox} that has the given {@code localizedID}.
+	 * @param localizedID The id of the desired entry
+	 * @return An instance of {@code Skybox}
+	 */
+	public Skybox getSkybox(String localizedID) {
+		return localizedID.startsWith("internal:") ? skyboxes.get("acl_internal_" + localizedID.replaceFirst("internal\\:", "")) : (skyboxes.get(localizedID) != null ? skyboxes.get(localizedID) : skyboxes.get("acl_internal_" + localizedID));
+	}
+	
 	/**
 	 * Gets a list of all registered entries and returns them as an {@link ArrayList} of {@link Indexable}.
 	 * @return An {@code ArrayList} of all entries
@@ -678,6 +764,22 @@ public final class Registry {
 	 */
 	public List<Light> getAllLights() {
 		return new ArrayList<>(lights.values());
+	}
+	
+	/**
+	 * Gets a list of all registered instances of {@link GUI} and returns them as an {@link ArrayList}.
+	 * @return An {@code ArrayList} of all instances of {@code GUI}
+	 */
+	public List<GUI> getAllGUIs() {
+		return new ArrayList<>(guis.values());
+	}
+	
+	/**
+	 * Gets a list of all registered instances of {@link Skybox} and returns them as an {@link ArrayList}.
+	 * @return An {@code ArrayList} of all instances of {@code Skybox}
+	 */
+	public List<Skybox> getAllSkyboxes() {
+		return new ArrayList<>(skyboxes.values());
 	}
 	
 	/**
@@ -921,6 +1023,240 @@ public final class Registry {
 	}
 	
 	/**
+	 * Gets a list of {@code registryID}s of all registered instances of {@link GUI} and returns them as a {@link List}.
+	 * @return A {@code List} of {@code registryID}s of all instances of {@code GUI}
+	 */
+	public List<String> getAllGUIRegistryIDs() {
+		return lights.values().stream().map(f -> f.getRegistryID()).collect(Collectors.toList());
+	}
+	
+	/**
+	 * Gets a list of {@code localizedID}s of all registered instances of {@link GUI} and returns them as a {@link List}.
+	 * <p>
+	 * Note: Any engine-defined entries will be returned without the "acl_internal_" prefix.
+	 * </p>
+	 * @return A {@code List} of {@code localizedID}s of all instances of {@code GUI}
+	 */
+	public List<String> getAllGUILocalizedIDs() {
+		return lights.values().stream().map(f -> {
+			if (f.getLocalizedID().startsWith("acl_internal_"))
+				return f.getLocalizedID().replaceFirst("acl_internal_", "");
+			else
+				return f.getLocalizedID();
+		}).collect(Collectors.toList());
+	}
+	
+	/**
+	 * Gets a list of {@code registryID}s of all registered instances of {@link Skybox} and returns them as a {@link List}.
+	 * @return A {@code List} of {@code registryID}s of all instances of {@code Skybox}
+	 */
+	public List<String> getAllSkyboxRegistryIDs() {
+		return skyboxes.values().stream().map(f -> f.getRegistryID()).collect(Collectors.toList());
+	}
+	
+	/**
+	 * Gets a list of {@code localizedID}s of all registered instances of {@link Skybox} and returns them as a {@link List}.
+	 * <p>
+	 * Note: Any engine-defined entries will be returned without the "acl_internal_" prefix.
+	 * </p>
+	 * @return A {@code List} of {@code localizedID}s of all instances of {@code Skybox}
+	 */
+	public List<String> getAllSkyboxLocalizedIDs() {
+		return skyboxes.values().stream().map(f -> {
+			if (f.getLocalizedID().startsWith("acl_internal_"))
+				return f.getLocalizedID().replaceFirst("acl_internal_", "");
+			else
+				return f.getLocalizedID();
+		}).collect(Collectors.toList());
+	}
+	
+	/**
+	 * Removes the entry containing the specified {@code registryID} from the appropriate maps.
+	 * <p>
+	 * This method does not allow for the removal of internal values.
+	 * These include any value whose {@code registryID} begins with "acl"
+	 * and {@code localizedID} begins with "acl_internal".
+	 * </p>
+	 * @param registryID The {@code registryID} of the entry
+	 */
+	public void remove(String registryID) {
+		if (registryID.startsWith("acl."))
+			return;
+		
+		Indexable i = entries.remove(registryID);
+		if (i != null) {
+			if (i instanceof Input)
+				removeInput(i.getLocalizedID());
+			else if (i instanceof SFX)
+				removeSFX(i.getLocalizedID());
+			else if (i instanceof State)
+				removeState(i.getLocalizedID());
+			else if (i instanceof Property)
+				removeProperty(i.getLocalizedID());
+			else if (i instanceof Texture)
+				removeTexture(i.getLocalizedID());
+			else if (i instanceof StoredFont)
+				removeFont(i.getLocalizedID());
+			else if (i instanceof Shader)
+				removeShader(i.getLocalizedID());
+			else if (i instanceof Model)
+				removeModel(i.getLocalizedID());
+			else if (i instanceof Light)
+				removeLight(i.getLocalizedID());
+			else if (i instanceof GUI)
+				removeGUI(i.getLocalizedID());
+			else if (i instanceof Skybox)
+				removeSkybox(i.getLocalizedID());
+			
+			if (i instanceof KeyControllable)
+				removeKeyControllable((KeyControllable) i);
+			if (i instanceof MouseControllable)
+				removeMouseControllable((MouseControllable) i);
+		}
+	}
+	
+	/**
+	 * Removes the instance of {@link Input} containing the specified {@code localizedID} from the map.
+	 * <p>
+	 * This method is intended for internal use only and should not be directly called by the user.
+	 * </p>
+	 * @param localizedID The {@code localizedID} of the entry
+	 */
+	private void removeInput(String localizedID) {
+		inputs.remove(localizedID);
+	}
+	
+	/**
+	 * Removes the instance of {@link SFX} containing the specified {@code localizedID} from the map.
+	 * <p>
+	 * This method is intended for internal use only and should not be directly called by the user.
+	 * </p>
+	 * @param localizedID The {@code localizedID} of the entry
+	 */
+	private void removeSFX(String localizedID) {
+		sfx.remove(localizedID);
+	}
+	
+	/**
+	 * Removes the instance of {@link State} containing the specified {@code localizedID} from the map.
+	 * <p>
+	 * This method is intended for internal use only and should not be directly called by the user.
+	 * </p>
+	 * @param localizedID The {@code localizedID} of the entry
+	 */
+	private void removeState(String localizedID) {
+		states.remove(localizedID);
+	}
+	
+	/**
+	 * Removes the instance of {@link Property} containing the specified {@code localizedID} from the map.
+	 * <p>
+	 * This method is intended for internal use only and should not be directly called by the user.
+	 * </p>
+	 * @param localizedID The {@code localizedID} of the entry
+	 */
+	private void removeProperty(String localizedID) {
+		properties.remove(localizedID);
+	}
+	
+	/**
+	 * Removes the instance of {@link Texture} containing the specified {@code localizedID} from the map.
+	 * <p>
+	 * This method is intended for internal use only and should not be directly called by the user.
+	 * </p>
+	 * @param localizedID The {@code localizedID} of the entry
+	 */
+	private void removeTexture(String localizedID) {
+		textures.remove(localizedID);
+	}
+	
+	/**
+	 * Removes the instance of {@link StoredFont} containing the specified {@code localizedID} from the map.
+	 * <p>
+	 * This method is intended for internal use only and should not be directly called by the user.
+	 * </p>
+	 * @param localizedID The {@code localizedID} of the entry
+	 */
+	private void removeFont(String localizedID) {
+		fonts.remove(localizedID);
+	}
+	
+	/**
+	 * Removes the instance of {@link Shader} containing the specified {@code localizedID} from the map.
+	 * <p>
+	 * This method is intended for internal use only and should not be directly called by the user.
+	 * </p>
+	 * @param localizedID The {@code localizedID} of the entry
+	 */
+	private void removeShader(String localizedID) {
+		Shader s = shaders.remove(localizedID);
+		if (s != null)
+			s.cleanUp();
+	}
+	
+	/**
+	 * Removes the instance of {@link Model} containing the specified {@code localizedID} from the map.
+	 * <p>
+	 * This method is intended for internal use only and should not be directly called by the user.
+	 * </p>
+	 * @param localizedID The {@code localizedID} of the entry
+	 */
+	private void removeModel(String localizedID) {
+		models.remove(localizedID);
+	}
+	
+	/**
+	 * Removes the instance of {@link Light} containing the specified {@code localizedID} from the map.
+	 * <p>
+	 * This method is intended for internal use only and should not be directly called by the user.
+	 * </p>
+	 * @param localizedID The {@code localizedID} of the entry
+	 */
+	private void removeLight(String localizedID) {
+		lights.remove(localizedID);
+	}
+	
+	/**
+	 * Removes the instance of {@link GUI} containing the specified {@code localizedID} from the map.
+	 * <p>
+	 * This method is intended for internal use only and should not be directly called by the user.
+	 * </p>
+	 * @param localizedID The {@code localizedID} of the entry
+	 */
+	private void removeGUI(String localizedID) {
+		guis.remove(localizedID);
+	}
+	
+	/**
+	 * Removes the instance of {@link Skybox} containing the specified {@code localizedID} from the map.
+	 * <p>
+	 * This method is intended for internal use only and should not be directly called by the user.
+	 * </p>
+	 * @param localizedID The {@code localizedID} of the entry
+	 */
+	private void removeSkybox(String localizedID) {
+		skyboxes.remove(localizedID);
+	}
+	
+	/**
+	 * Removes the instance of {@link KeyControllable} from the list of controllers contained in the
+	 * engine-defined instance of {@link KeyInput}.
+	 * @param entry The instance of {@code KeyControllable} to remove
+	 */
+	public void removeKeyControllable(KeyControllable entry) {
+		((KeyInput) inputs.get("acl_internal_keyboard")).removeController(entry);
+	}
+	
+	/**
+	 * Removes the instance of {@link MouseControllable} from the list of controllers contained in the
+	 * engine-defined instance of {@link MouseInput}.
+	 * @param entry The instance of {@code MouseControllable} to remove
+	 */
+	public void removeMouseControllable(MouseControllable entry) {
+		((MouseInput) inputs.get("acl_internal_mouse")).removeController(entry);
+	}
+	
+	/**
 	 * Removes the first occurrence of the given {@link Entity} from the list of all entities as well as any controller lists that particular entity may have occupied.
 	 * @param e The {@code Entity} to remove
 	 */
@@ -935,7 +1271,7 @@ public final class Registry {
 	
 	/**
 	 * Removes the first occurrence of the given {@link Terrain} from the list of all terrains as well as any controller lists that particular terrain may have occupied.
-	 * @param e The {@code Terrain} to remove
+	 * @param t The {@code Terrain} to remove
 	 */
 	public void removeTerrain(Terrain t) {
 		engine.getTerrainHandler().removeTerrain(t);

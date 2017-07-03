@@ -11,6 +11,7 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
+import org.lwjgl.util.vector.Vector4f;
 
 import com.accele.engine.core.Engine;
 import com.accele.engine.core.Indexable;
@@ -95,6 +96,10 @@ public abstract class Shader implements Indexable {
 	
 	protected void loadUniformVector(int location, Vector2f value) {
 		GL20.glUniform2f(location, value.x, value.y);
+	}
+	
+	protected void loadUniformVector(int location, Vector4f value) {
+		GL20.glUniform4f(location, value.x, value.y, value.z, value.w);
 	}
 	
 	private static int loadShader(String file, int type) {

@@ -40,6 +40,7 @@ import com.accele.engine.core.Engine;
 import com.accele.engine.entity.Entity3D;
 import com.accele.engine.gfx.gui.GUI;
 import com.accele.engine.gfx.shader.GUIShader;
+import com.accele.engine.gfx.shader.Shader2D;
 import com.accele.engine.gfx.shader.StaticShader;
 import com.accele.engine.gfx.shader.TerrainShader;
 import com.accele.engine.gfx.shader.WaterShader;
@@ -110,7 +111,7 @@ public final class Graphics {
 		this.font = engine.getRegistry().getFont("internal:default");
 		this.color = Color.white;
 		this.projectionMatrix = projectionMatrix;
-		engine.getRegistry().register(guiRect = engine.getModelLoader().loadModel("acl.model.guiRect", "acl_internal_guiRect", new float[] {-1, 1, -1, -1, 1, 1, 1, -1}, 2));
+		engine.getRegistry().register(guiRect = engine.getModelLoader().loadModel("acl.model.guiRect", "acl_internal_guiRect", new float[] { -1, 1, -1, -1, 1, 1, 1, -1 }, 2));
 		engine.getRegistry().register(rect = engine.getModelLoader().loadModel("acl.model.rect", "acl_internal_rect", new float[] { -1, -1, -1, 1, 1, -1, 1, -1, -1, 1, 1, 1 }, 2));
 		engine.getRegistry().register(cube = engine.getModelLoader().loadModel("acl.model.cube", "acl_internal_cube", VERTICES, 3));
 	}
@@ -127,6 +128,19 @@ public final class Graphics {
 	}
 	
 	public void drawImage(Texture tex, int x, int y, int width, int height, float rotX, float rotY, float rotZ) {
+		GL11.glMatrixMode(GL_MODELVIEW);
+	    GL11.glLoadIdentity();
+	    GL11.glPushMatrix();
+	    GL11.glTranslatef(x + width / 2, y + height / 2, 0.0F);
+	    GL11.glRotatef(rotX, 1.0F, 0.0F, 0.0F);
+	    GL11.glRotatef(rotY, 0.0F, 1.0F, 0.0F);
+	    GL11.glRotatef(rotZ, 0.0F, 0.0F, 1.0F);
+	    GL11.glTranslatef(-(x + width / 2), -(y + height / 2), 0.0F);
+	    drawImage(tex, x, y, width, height);
+	    GL11.glPopMatrix();
+	}
+	
+	public void drawImageInternal(Texture tex, int x, int y, int width, int height, float rotX, float rotY, float rotZ) {
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 		glPushMatrix();
@@ -149,7 +163,7 @@ public final class Graphics {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		
-		tex.getImage().bind();
+		tex.getInternal().bind();
 		
 		glColor4f(1f, 1f, 1f, 1f);
 		glBegin(GL_QUADS);
@@ -165,7 +179,7 @@ public final class Graphics {
 	}
 	
 	public void drawCenteredImage(Texture tex, Rectangle rect, int width, int height) {
-		tex.getImage().bind();
+		tex.getInternal().bind();
 		
 		int centeredX = rect.getX() + ((rect.getWidth() - width) / 2);
 		int centeredY = rect.getY() + ((rect.getHeight() - height) / 2);
@@ -184,7 +198,7 @@ public final class Graphics {
 	}
 	
 	public void drawCenteredImageHorizontal(Texture tex, Rectangle rect, int width, int height) {
-		tex.getImage().bind();
+		tex.getInternal().bind();
 		
 		int centeredX = rect.getX() + ((rect.getWidth() - width) / 2);
 		
@@ -202,7 +216,7 @@ public final class Graphics {
 	}
 	
 	public void drawCenteredImageVertical(Texture tex, Rectangle rect, int width, int height) {
-		tex.getImage().bind();
+		tex.getInternal().bind();
 		
 		int centeredY = rect.getY() + ((rect.getHeight() - height) / 2);
 		
@@ -295,6 +309,26 @@ public final class Graphics {
 		this.color = color;
 	}
 	
+	// ================================================== New 2D Methods ================================================== //
+	
+	public void drawTexture(Vector2f pos, Vector2f rot, Vector2f scale, Texture texture, Shader2D shader) {
+		shader.start();
+		GL30.glBindVertexArray(guiRect.getVaoID());
+		GL20.glEnableVertexAttribArray(0);
+		GL11.glEnable(GL11.GL_BLEND);
+		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+		GL11.glDisable(GL11.GL_DEPTH_TEST);
+		GL13.glActiveTexture(GL13.GL_TEXTURE0);
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getTextureID());
+		shader.loadTransformationMatrix(Utils.Dim2.createTransformationMatrix(pos, rot, scale));
+		GL11.glDrawArrays(GL11.GL_TRIANGLE_STRIP, 0, guiRect.getVertexCount());
+		GL11.glEnable(GL11.GL_DEPTH_TEST);
+		GL11.glDisable(GL11.GL_BLEND);
+		GL20.glDisableVertexAttribArray(0);
+		GL30.glBindVertexArray(0);
+		shader.stop();
+	}
+	
 	// ================================================== 3D Methods ================================================== //
 	
 	public void drawGUIComponent(GUI gui, GUIShader shader) {
@@ -305,7 +339,7 @@ public final class Graphics {
 		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		GL11.glDisable(GL11.GL_DEPTH_TEST);
 		GL13.glActiveTexture(GL13.GL_TEXTURE0);
-		GL11.glBindTexture(GL11.GL_TEXTURE_2D, gui.getTexture().getImage().getTextureID());
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, gui.getTexture().getTextureID());
 		shader.loadTransformationMatrix(Utils.Dim2.createTransformationMatrix(gui.getPos(), gui.getRotation(), gui.getScale()));
 		GL11.glDrawArrays(GL11.GL_TRIANGLE_STRIP, 0, guiRect.getVertexCount());
 		GL11.glEnable(GL11.GL_DEPTH_TEST);
@@ -334,7 +368,7 @@ public final class Graphics {
 			Utils.Dim3.disableCulling();
 		
 		GL13.glActiveTexture(GL13.GL_TEXTURE0);
-		GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getImage().getTextureID());
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getTextureID());
 		GL11.glDrawElements(GL11.GL_TRIANGLES, model.getVertexCount(), GL11.GL_UNSIGNED_INT, 0);
 		GL20.glDisableVertexAttribArray(0);
 		GL20.glDisableVertexAttribArray(1);
@@ -363,7 +397,7 @@ public final class Graphics {
 		shader.loadFakeLighting(texture.useFakeLighting());
 		shader.loadShineVariables(texture.getShineDamper(), texture.getReflectivity());
 		GL13.glActiveTexture(GL13.GL_TEXTURE0);
-		GL11.glBindTexture(GL11.GL_TEXTURE_2D, entity.getModel().getTexture().getImage().getTextureID());
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, entity.getModel().getTexture().getTextureID());
 		GL11.glDrawElements(GL11.GL_TRIANGLES, entity.getModel().getVertexCount(), GL11.GL_UNSIGNED_INT, 0);
 		GL20.glDisableVertexAttribArray(0);
 		GL20.glDisableVertexAttribArray(1);
@@ -380,30 +414,29 @@ public final class Graphics {
 		GL20.glEnableVertexAttribArray(2);
 		
 		ModelTexture texture = model.getTexture();
-		if (texture.hasTransparency())
-			Utils.Dim3.disableCulling();
-		
 		shader.loadNumRows(texture.getNumRows());
+		if (texture.hasTransparency())
+			Utils.Dim3.disableCulling();		
 		shader.loadSkyColor((Vector3f) engine.getRegistry().getProperty("internal:clearColor").get());
 		shader.loadFogDensity((float) engine.getRegistry().getProperty("internal:shaderFogDensity").get());
 		shader.loadFogGradient((float) engine.getRegistry().getProperty("internal:shaderFogGradient").get());
 		shader.loadFakeLighting(texture.useFakeLighting());
 		shader.loadShineVariables(texture.getShineDamper(), texture.getReflectivity());
 		GL13.glActiveTexture(GL13.GL_TEXTURE0);
-		GL11.glBindTexture(GL11.GL_TEXTURE_2D, model.getTexture().getImage().getTextureID());
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, model.getTexture().getTextureID());
 		
 		for (Entity3D e : entities) {
-			shader.loadOffset(new Vector2f(e.getTextureXOffset(), e.getTextureYOffset()));
 			shader.loadTransformationMatrix(Utils.Dim3.createTransformationMatrix(e));
+			shader.loadOffset(new Vector2f(e.getTextureXOffset(), e.getTextureYOffset()));
 			GL11.glDrawElements(GL11.GL_TRIANGLES, model.getVertexCount(), GL11.GL_UNSIGNED_INT, 0);			
 		}
+		
+		Utils.Dim3.enableCulling();
 		
 		GL20.glDisableVertexAttribArray(0);
 		GL20.glDisableVertexAttribArray(1);
 		GL20.glDisableVertexAttribArray(2);
 		GL30.glBindVertexArray(0);
-		
-		Utils.Dim3.enableCulling();
 	}
 	
 	public void drawTerrain(Terrain terrain, TerrainShader shader) {
@@ -430,7 +463,7 @@ public final class Graphics {
 		GL13.glActiveTexture(GL13.GL_TEXTURE3);
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getB().getTextureID());
 		GL13.glActiveTexture(GL13.GL_TEXTURE4);
-		GL11.glBindTexture(GL11.GL_TEXTURE_2D, terrain.getModel().getBlendMap().getImage().getTextureID());
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, terrain.getModel().getBlendMap().getTextureID());
 		GL11.glDrawElements(GL11.GL_TRIANGLES, terrain.getModel().getVertexCount(), GL11.GL_UNSIGNED_INT, 0);
 		GL20.glDisableVertexAttribArray(0);
 		GL20.glDisableVertexAttribArray(1);
@@ -454,6 +487,10 @@ public final class Graphics {
 		shader.loadViewMatrix(engine.getCamera());
 		GL30.glBindVertexArray(rect.getVaoID());
 		GL20.glEnableVertexAttribArray(0);
+		GL13.glActiveTexture(GL13.GL_TEXTURE0);
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, engine.getWaterFrameBufferHandler().getReflectionTexture());
+		GL13.glActiveTexture(GL13.GL_TEXTURE1);
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, engine.getWaterFrameBufferHandler().getRefractionTexture());
 		shader.loadModelMatrix(Utils.Dim3.createTransformationMatrix(new Vector3f(x, height, z), 0, 0, 0, size));
 		GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, rect.getVertexCount());
 		GL20.glDisableVertexAttribArray(0);

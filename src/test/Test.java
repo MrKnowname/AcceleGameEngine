@@ -1,13 +1,18 @@
 package test;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import javax.swing.JOptionPane;
+
 import org.lwjgl.util.vector.Vector3f;
+import org.lwjgl.util.vector.Vector4f;
 
 import com.accele.engine.core.Engine;
 import com.accele.engine.entity.Entity3D;
+import com.accele.engine.entity.MultiplayerEntity;
 import com.accele.engine.gfx.DefaultEntityCamera;
 import com.accele.engine.gfx.Graphics;
 import com.accele.engine.gfx.Light;
@@ -22,6 +27,7 @@ import com.accele.engine.io.KeyControllable;
 import com.accele.engine.io.KeyInput;
 import com.accele.engine.io.MousePicker;
 import com.accele.engine.model.TexturedModel;
+import com.accele.engine.net.PacketLogin;
 import com.accele.engine.property.Property;
 import com.accele.engine.state.State;
 import com.accele.engine.terrain.DefaultTerrainWithHeightMap;
@@ -51,7 +57,6 @@ public class Test {
 	private static class StateImpl extends State implements KeyControllable {
 
 		private List<Light> lights;
-		//private GUI gui;
 		private Skybox skybox;
 		private MousePicker mp;
 		private WaterShader waterShader;
@@ -60,7 +65,6 @@ public class Test {
 			super(engine, registryID, localizedID);
 			lights = new ArrayList<>();
 			waterShader = (WaterShader) engine.getRegistry().getShader("internal:water");
-			//gui = new RenderOnlyGUI(engine, "acl.test.gui.rogui", "rogui", new Texture("acl.test.texture.grass", "grass", new Resource("res/grass.png", Utils.DEFAULT_TEXTURE_LOADER)), new Vector2f(1, 1), new Vector2f(0, 0), new Vector2f(1, 1));
 			engine.getRegistry().getProperty("internal:shaderFogDensity").set(0.0035f);
 			engine.getRegistry().getProperty("internal:shaderFogGradient").set(5f);
 			engine.getEntityHandler().addStaticShaderLight(Utils.addAndReturn(lights, new Light("acl.test.light.sun", "sun", new Vector3f(0, 1000, -7000), new Vector3f(0.4f, 0.4f, 0.4f))));
@@ -123,18 +127,41 @@ public class Test {
 
 		@Override
 		public void onRender(Graphics g) {
-			engine.getTerrainHandler().onRender(g);
+			engine.getWaterFrameBufferHandler().bindReflectionFrameBuffer();
+			
+			float distance = 2 * (engine.getCamera().getPos().y - 0);
+			engine.getCamera().getPos().y -= distance;
+			engine.getCamera().invertPitch();
+			
+			engine.getRegistry().getProperty("internal:clipPlane").set(new Vector4f(0, 1, 0, -0));
 			engine.getEntityHandler().onRender(g);
+			engine.getTerrainHandler().onRender(g);
+			skybox.onRender(g);
+			
+			engine.getCamera().getPos().y += distance;
+			engine.getCamera().invertPitch();
+			
+			engine.getWaterFrameBufferHandler().bindRefractionFrameBuffer();
+			engine.getRegistry().getProperty("internal:clipPlane").set(new Vector4f(0, -1, 0, -0));
+			engine.getEntityHandler().onRender(g);
+			engine.getTerrainHandler().onRender(g);
+			skybox.onRender(g);
+			
+			engine.getRegistry().getProperty("internal:clipPlane").set(new Vector4f(-1, -1, -1, -1));
+			engine.getWaterFrameBufferHandler().unbindCurrentFrameBuffer();
+			engine.getEntityHandler().onRender(g);
+			engine.getTerrainHandler().onRender(g);
 			skybox.onRender(g);
 			waterShader.start();
 			g.drawWaterQuad(200, -150, 0, 50, waterShader);
 			waterShader.stop();
-			//gui.onRender(g);
 		}
 
 		@Override
 		public void onInit() {
-			
+			PacketLogin packet = new PacketLogin(JOptionPane.showInputDialog(null, "Enter a username:").getBytes());
+			packet.writeData(engine.getClient());
+			//engine.getClient().send("ping".getBytes());
 		}
 
 		@Override
@@ -272,6 +299,60 @@ public class Test {
 		@Override
 		public void onKeyHold(int key) {
 			
+		}
+		
+	}
+	
+	public static class PlayerMP extends MultiplayerEntity {
+		
+		private static final float VELOCITY_FACTOR = 40f;
+		private static final float TURN_SPEED = 160f;
+		private static final float GRAVITY = -50f;
+		private static final float JUMP_POWER = 30;
+		
+		private List<Light> lights;
+		private float currentSpeed;
+		private float currentTurnSpeed;
+		private float currentUpSpeed;
+		private boolean airborne;
+		private Property secondsPerFrame;
+		
+		public String username;
+		
+		public PlayerMP(Engine engine, Vector3f pos, InetAddress ip, int port, String username) {
+			super(engine, "test.pmp", "pmp", pos, 0, 0, 0, 1, new TexturedModel(engine, engine.getModelLoader().loadModel("acl.test.model.person", "person", new Resource("res/person.obj", Utils.DEFAULT_MODEL_LOADER)), new ModelTexture("acl.test.texture.default", "default", new Resource("res/stall_texture.png", Utils.DEFAULT_TEXTURE_LOADER), 10, 1, false, false, 1)), engine.getRegistry().getShader("internal:static"), 0, ip, port);
+			this.lights = new ArrayList<>();
+			this.secondsPerFrame = engine.getRegistry().getProperty("internal:secondsPerFrame");
+			
+			this.username = username;
+		}
+
+		@Override
+		public void onUpdate() {
+			yRot += currentTurnSpeed * (float) secondsPerFrame.get();
+			float distance = currentSpeed * (float) secondsPerFrame.get();
+			float dx = (float) (distance * Math.sin(Math.toRadians(yRot)));
+			float dz = (float) (distance * Math.cos(Math.toRadians(yRot)));
+			((Vector3f) pos).x += dx;
+			((Vector3f) pos).z += dz;
+			currentUpSpeed += GRAVITY * (float) secondsPerFrame.get();
+			((Vector3f) pos).y += currentUpSpeed * (float) secondsPerFrame.get();
+			Terrain t = Utils.Dim3.getTerrainBelowEntity(engine.getTerrainHandler().getTerrains(), this);
+			float terrainHeight = t == null ? 0 : t.getHeight(((Vector3f) pos).x, ((Vector3f) pos).z);
+			if (((Vector3f) pos).y < terrainHeight) {
+				currentUpSpeed = 0;
+				((Vector3f) pos).y = terrainHeight;
+				airborne = false;
+			}
+		}
+
+		@Override
+		public void onRender(Graphics g) {
+			shader.start();
+			((StaticShader) shader).loadLights(lights);
+			((StaticShader) shader).loadViewMatrix(engine.getCamera());
+			g.drawEntity(this, (StaticShader) shader);
+			shader.stop();
 		}
 		
 	}

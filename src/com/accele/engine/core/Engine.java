@@ -30,21 +30,26 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
+import javax.swing.JOptionPane;
+
 import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
 import org.lwjgl.opengl.ContextAttribs;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.PixelFormat;
 import org.lwjgl.opengl.Util;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
+import org.lwjgl.util.vector.Vector4f;
 import org.newdawn.slick.Color;
 
 import com.accele.engine.entity.EntityHandler;
 import com.accele.engine.gfx.Camera;
 import com.accele.engine.gfx.Graphics;
 import com.accele.engine.gfx.StoredFont;
+import com.accele.engine.gfx.internal.WaterFrameBufferHandler;
 import com.accele.engine.gfx.shader.GUIShader;
 import com.accele.engine.gfx.shader.Shader;
 import com.accele.engine.gfx.shader.SkyboxShader;
@@ -55,6 +60,8 @@ import com.accele.engine.io.IOHandler;
 import com.accele.engine.io.KeyInput;
 import com.accele.engine.io.MouseInput;
 import com.accele.engine.model.ModelLoader;
+import com.accele.engine.net.Client;
+import com.accele.engine.net.Server;
 import com.accele.engine.property.OperationLocation;
 import com.accele.engine.property.Property;
 import com.accele.engine.property.PropertyHandler;
@@ -96,6 +103,11 @@ public final class Engine {
 	private Random rand;
 	private ModelLoader modelLoader;
 	private Camera camera;
+	private WaterFrameBufferHandler wHandler;
+	
+	private Server server;
+	private Client client;
+	private boolean runServer;
 	
 	private long lastFPS;
 	private Property propertyFPS;
@@ -218,6 +230,13 @@ public final class Engine {
 		tHandler = new TerrainHandler();
 		rand = ThreadLocalRandom.current();
 		modelLoader = new ModelLoader();
+		
+		if (JOptionPane.showConfirmDialog(null, "Do you want to run the server?") == 0) {
+			server = new Server(this);
+			runServer = true;
+		}
+		
+		client = new Client(this, "localhost");
 	}
 	
 	/**
@@ -275,6 +294,23 @@ public final class Engine {
 			((SkyboxShader) shader).loadCelShadingLevels((int) value);
 			shader.stop();
 		}), OperationLocation.RUN_ON_SET)));
+		registry.register(Utils.addAndReturn(internalProperties, new Property(this, "acl.prop.clipPlane", "acl_internal_clipPlane", new Vector4f(0, 0, 0, 0), true, false, Optional.of((engine, value) -> {
+			Vector4f clipPlane = (Vector4f) value;
+			
+			if (clipPlane.x == -1 && clipPlane.y == -1 && clipPlane.z == -1 && clipPlane.w == -1)
+				GL11.glDisable(GL11.GL_CLIP_PLANE0);
+			else {
+				GL11.glEnable(GL11.GL_CLIP_PLANE0);
+				Shader shader = (StaticShader) engine.getRegistry().getShader("internal:static");
+				shader.start();
+				((StaticShader) shader).loadClipPlane((Vector4f) value);
+				shader.stop();
+				shader = (TerrainShader) engine.getRegistry().getShader("internal:terrain");
+				shader.start();
+				((TerrainShader) shader).loadClipPlane((Vector4f) value);
+				shader.stop();
+			}
+		}), OperationLocation.RUN_ON_SET)));
 		
 		registry.register(new KeyInput(this));
 		registry.register(new MouseInput(this));
@@ -320,37 +356,42 @@ public final class Engine {
 				Vector3f clearColor = (Vector3f) registry.getProperty("internal:clearColor").get();
 				glClearColor(clearColor.x, clearColor.y, clearColor.z, 1.0f);
 				glViewport(0, 0, (int) registry.getProperty("internal:screenWidth").get(), (int) registry.getProperty("internal:screenHeight").get());
+				
+				projectionMatrix.value = Utils.Dim3.createProjectionMatrix(this);
+				
+				StaticShader staticShader = new StaticShader(this, "acl.shader.static", "acl_internal_static");
+				staticShader.start();
+				staticShader.loadProjectionMatrix(projectionMatrix.value);
+				staticShader.stop();
+				registry.register(staticShader);
+				TerrainShader terrainShader = new TerrainShader(this, "acl.shader.terrain", "acl_internal_terrain");
+				terrainShader.start();
+				terrainShader.loadProjectionMatrix(projectionMatrix.value);
+				terrainShader.connectTextureUnits();
+				terrainShader.stop();
+				registry.register(terrainShader);
+				registry.register(new GUIShader(this, "acl.shader.gui", "acl_internal_gui"));
+				SkyboxShader skyboxShader = new SkyboxShader(this, "acl.shader.skybox", "acl_internal_skybox");
+				skyboxShader.start();
+				skyboxShader.loadLimits((float) registry.getProperty("internal:skyboxFogFadeUpperLimit").get(), (float) registry.getProperty("internal:skyboxFogFadeLowerLimit").get());
+				skyboxShader.loadProjectionMatrix(projectionMatrix.value);
+				skyboxShader.stop();
+				registry.register(skyboxShader);
+				WaterShader waterShader = new WaterShader(this, "acl.shader.water", "acl_internal_water");
+				waterShader.start();
+				waterShader.loadProjectionMatrix(projectionMatrix.value);
+				waterShader.connectTextureUnits();
+				waterShader.stop();
+				registry.register(waterShader);
+				
+				wHandler = new WaterFrameBufferHandler(this);
+				
+				Util.checkGLError();
 			} else
 				throw new IllegalArgumentException("Invalid gameType \"" + gameType + "\".");
 		} catch (LWJGLException e) {
 			e.printStackTrace();
 		}
-		
-		projectionMatrix.value = Utils.Dim3.createProjectionMatrix(this);
-		
-		StaticShader staticShader = new StaticShader(this, "acl.shader.static", "acl_internal_static");
-		staticShader.start();
-		staticShader.loadProjectionMatrix(projectionMatrix.value);
-		staticShader.stop();
-		registry.register(staticShader);
-		TerrainShader terrainShader = new TerrainShader(this, "acl.shader.terrain", "acl_internal_terrain");
-		terrainShader.start();
-		terrainShader.loadProjectionMatrix(projectionMatrix.value);
-		terrainShader.connectTextureUnits();
-		terrainShader.stop();
-		registry.register(terrainShader);
-		registry.register(new GUIShader(this, "acl.shader.gui", "acl_internal_gui"));
-		SkyboxShader skyboxShader = new SkyboxShader(this, "acl.shader.skybox", "acl_internal_skybox");
-		skyboxShader.start();
-		skyboxShader.loadLimits((float) registry.getProperty("internal:skyboxFogFadeUpperLimit").get(), (float) registry.getProperty("internal:skyboxFogFadeLowerLimit").get());
-		skyboxShader.loadProjectionMatrix(projectionMatrix.value);
-		skyboxShader.stop();
-		registry.register(skyboxShader);
-		WaterShader waterShader = new WaterShader(this, "acl.shader.water", "acl_internal_water");
-		waterShader.start();
-		waterShader.loadProjectionMatrix(projectionMatrix.value);
-		waterShader.stop();
-		registry.register(waterShader);
 		
 		registry.register(new StoredFont("acl.font.default", "acl_internal_default", new Font("Arial", 0, 24)));
 		
@@ -388,8 +429,15 @@ public final class Engine {
 		Property gameType = registry.getProperty("internal:gameType");
 		pHandler.setGameRunning(true);
 		
+		if (runServer)
+			server.start();
+		client.start();
+		
 		while (pHandler.isGameRunning() && !Display.isCloseRequested()) {
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			if ((int) gameType.get() == 0)
+				glClear(GL_COLOR_BUFFER_BIT);
+			else
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			
 			aHandler.onUpdate();
 			
@@ -428,8 +476,11 @@ public final class Engine {
 	private void finalizeAndExit() {
 		if (sHandler.getCurrentState() != null)
 			sHandler.getCurrentState().onExit();
-		registry.getAllShaders().forEach(c -> c.cleanUp());
-		modelLoader.clear();
+		if ((int) registry.getProperty("internal:gameType").get() == 1) {
+			registry.getAllShaders().forEach(c -> c.cleanUp());
+			modelLoader.clear();
+			wHandler.cleanUp();
+		}
 		Display.destroy();
 		System.exit(0);
 	}
@@ -568,12 +619,24 @@ public final class Engine {
 		this.camera = camera;
 	}
 	
+	/**
+	 * Gets the {@link WaterFrameBufferHandler} instance as maintained by the engine.
+	 * @return An instance of the {@code WaterFrameBufferHandler} class
+	 */
+	public WaterFrameBufferHandler getWaterFrameBufferHandler() {
+		return wHandler;
+	}
+	
 	/** 
 	 * Gets the current time of the program, in milliseconds.
 	 * @return The time of the program, in milliseconds
 	 */
 	public long getTime() {
 		return (Sys.getTime() * 1000) / Sys.getTimerResolution();
+	}
+	
+	public Client getClient() {
+		return client;
 	}
 	
 }

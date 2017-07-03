@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
+import org.lwjgl.util.vector.Vector4f;
 
 import com.accele.engine.core.Engine;
 import com.accele.engine.gfx.Camera;
@@ -33,6 +34,7 @@ public class TerrainShader extends Shader {
 	private int location_blendMap;
 	private int[] location_attenuation;
 	private int location_celShadingLevels;
+	private int location_plane;
 	
 	public TerrainShader(Engine engine, String registryID, String localizedID) {
 		super(engine, registryID, localizedID, VERTEX_FILE, FRAGMENT_FILE);
@@ -72,6 +74,7 @@ public class TerrainShader extends Shader {
 		}
 		
 		location_celShadingLevels = super.getUniformLocation("celShadingLevels");
+		location_plane = super.getUniformLocation("plane");
 	}
 	
 	public void loadTransformationMatrix(Matrix4f matrix) {
@@ -127,6 +130,10 @@ public class TerrainShader extends Shader {
 	
 	public void loadCelShadingLevels(int celShadingLevels) {
 		super.loadUniformInt(location_celShadingLevels, celShadingLevels);
+	}
+	
+	public void loadClipPlane(Vector4f plane) {
+		super.loadUniformVector(location_plane, plane);
 	}
 
 }

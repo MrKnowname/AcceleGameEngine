@@ -1,4 +1,4 @@
-#version 330 core
+#version 150
 
 in vec3 position;
 in vec2 textureCoords;
@@ -19,10 +19,13 @@ uniform float fogDensity;
 uniform float fogGradient;
 uniform int numRows;
 uniform vec2 offset;
+uniform vec4 plane;
 
 void main(void) {
-
 	vec4 worldPosition = transformationMatrix * vec4(position, 1.0);
+	
+	gl_ClipDistance[0] = dot(worldPosition, plane);
+	
 	vec4 positionRelativeToCamera = viewMatrix * worldPosition;
 	gl_Position = projectionMatrix * positionRelativeToCamera;
 	passTextureCoords = (textureCoords / numRows) + offset;

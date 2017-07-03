@@ -33,6 +33,10 @@ public abstract class Camera implements Indexable, Tickable {
 	public float getRoll() {
 		return roll;
 	}
+	
+	public void invertPitch() {
+		this.pitch = -this.pitch;
+	}
 
 	@Override
 	public String getRegistryID() {
