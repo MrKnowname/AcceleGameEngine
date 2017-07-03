@@ -1,0 +1,16 @@
+com.accele.engine.core
+com.accele.engine.entity
+com.accele.engine.gfx
+com.accele.engine.gfx.gui
+com.accele.engine.gfx.internal
+com.accele.engine.gfx.shader
+com.accele.engine.gfx.skybox
+com.accele.engine.io
+com.accele.engine.model
+com.accele.engine.property
+com.accele.engine.sfx
+com.accele.engine.sfx.internal
+com.accele.engine.state
+com.accele.engine.terrain
+com.accele.engine.util
+com.accele.engine.util.internal

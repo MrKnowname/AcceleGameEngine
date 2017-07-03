@@ -1,0 +1,377 @@
+<<EXAMPLE CODE>>
+<<INIT>>
+ContextAttribs attribs = new ContextAttribs(3,2)
+		.withForwardCompatible(true)
+		.withProfileCore(true);
+Display.setDisplayMode(new DisplayMode(WIDTH,HEIGHT));
+			Display.create(new PixelFormat(), attribs);
+			Display.setTitle("Our First Display!");
+			GL11.glEnable(GL13.GL_MULTISAMPLE);
+GL11.glViewport(0,0, WIDTH, HEIGHT);
+<<>>
+<<FOR EACH TEXTURE>>
+texture = TextureLoader.getTexture("PNG", new FileInputStream("res/" + fileName
+					+ ".png"));
+GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
+			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER,
+					GL11.GL_LINEAR_MIPMAP_LINEAR);
+			GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL14.GL_TEXTURE_LOD_BIAS, -0.4f);
+<<>>
+<<TERRAIN GENERATION>>
+int vaoID = GL30.glGenVertexArrays();
+		vaos.add(vaoID);
+		GL30.glBindVertexArray(vaoID);
+int vboID = GL15.glGenBuffers();
+		vbos.add(vboID);
+GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboID);
+IntBuffer buffer = storeDataInIntBuffer(indices);		GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
+<<FOR EACH ATTRIBUTE>>
+int vboID = GL15.glGenBuffers();
+		vbos.add(vboID);
+		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboID);
+		FloatBuffer buffer = storeDataInFloatBuffer(data);
+		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
+		GL20.glVertexAttribPointer(attributeNumber, coordinateSize, GL11.GL_FLOAT, false, 0, 0);
+		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+<<>>
+GL30.glBindVertexArray(0);
+<<>>
+<<MASTER RENDERER INIT>>
+GL11.glEnable(GL11.GL_CULL_FACE);
+		GL11.glCullFace(GL11.GL_BACK);
+<<>>
+<<SHADER INIT>>
+GL20.glShaderSource(shaderID, shaderSource);
+		GL20.glCompileShader(shaderID);
+programID = GL20.glCreateProgram();
+		GL20.glAttachShader(programID, vertexShaderID);
+		GL20.glAttachShader(programID, fragmentShaderID);
+bindAttributes();
+GL20.glLinkProgram(programID);
+		GL20.glValidateProgram(programID);
+getAllUniformLocations();
+<<>>
+<<WATER FBO INIT>>
+<<REFLECT FBO INIT>>
+int frameBuffer = GL30.glGenFramebuffers();
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, frameBuffer);
+GL11.glDrawBuffer(GL30.GL_COLOR_ATTACHMENT0);
+int texture = GL11.glGenTextures();
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
+		GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGB, width, height,
+				0, GL11.GL_RGB, GL11.GL_UNSIGNED_BYTE, (ByteBuffer) null);
+		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
+		GL32.glFramebufferTexture(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0,
+				texture, 0);
+int depthBuffer = GL30.glGenRenderbuffers();
+		GL30.glBindRenderbuffer(GL30.GL_RENDERBUFFER, depthBuffer);
+		GL30.glRenderbufferStorage(GL30.GL_RENDERBUFFER, GL11.GL_DEPTH_COMPONENT, width,
+				height);
+		GL30.glFramebufferRenderbuffer(GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_ATTACHMENT,
+				GL30.GL_RENDERBUFFER, depthBuffer);
+GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
+		GL11.glViewport(0, 0, Display.getWidth(), Display.getHeight());
+<<>>
+<<REFRACT FBO INIT>>
+int frameBuffer = GL30.glGenFramebuffers();
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, frameBuffer);		GL11.glDrawBuffer(GL30.GL_COLOR_ATTACHMENT0);
+int texture = GL11.glGenTextures();
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
+		GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGB, width, height,
+				0, GL11.GL_RGB, GL11.GL_UNSIGNED_BYTE, (ByteBuffer) null);
+		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
+		GL32.glFramebufferTexture(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0,
+				texture, 0);
+int texture = GL11.glGenTextures();
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
+		GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL14.GL_DEPTH_COMPONENT32, width, height,
+				0, GL11.GL_DEPTH_COMPONENT, GL11.GL_FLOAT, (ByteBuffer) null);
+		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
+		GL32.glFramebufferTexture(GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_ATTACHMENT,
+				texture, 0);
+GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
+		GL11.glViewport(0, 0, Display.getWidth(), Display.getHeight());
+<<>>
+<<>>
+<<GAME LOOP>>
+GL11.glEnable(GL30.GL_CLIP_DISTANCE0);
+<<BIND REFLECT FBO>>
+GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, frameBuffer);
+		GL11.glViewport(0, 0, width, height);
+<<>>
+<<RENDER PRIMARY>>
+GL11.glEnable(GL11.GL_DEPTH_TEST);
+		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+		GL11.glClearColor(RED, GREEN, BLUE, 1);
+<<RENDER ENTITIES>>
+<<>>
+<<RENDER TERRAINS>>
+<<>>
+<<RENDER SKYBOX>>
+<<>>
+<<>>
+<<BIND REFRACT FBO>>
+GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, frameBuffer);
+		GL11.glViewport(0, 0, width, height);
+<<>>
+<<RENDER PRIMARY>>
+GL11.glEnable(GL11.GL_DEPTH_TEST);
+		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+		GL11.glClearColor(RED, GREEN, BLUE, 1);
+<<RENDER ENTITIES>>
+<<>>
+<<RENDER TERRAINS>>
+<<>>
+<<RENDER SKYBOX>>
+<<>>
+<<>>
+GL11.glDisable(GL30.GL_CLIP_DISTANCE0);
+<<UNBIND FBO>>
+GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
+		GL11.glViewport(0, 0, Display.getWidth(), Display.getHeight());
+<<>>
+<<RENDER PRIMARY>>
+GL11.glEnable(GL11.GL_DEPTH_TEST);
+		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+		GL11.glClearColor(RED, GREEN, BLUE, 1);
+<<RENDER ENTITIES>>
+<<>>
+<<RENDER TERRAINS>>
+<<>>
+<<RENDER SKYBOX>>
+<<>>
+<<>>
+<<RENDER WATER>>
+<<>>
+<<RENDER GUI>>
+<<>>
+<<UPDATE DISPLAY>>
+Display.sync(FPS_CAP);
+		Display.update();
+<<>>
+<<FINALIZE>>
+<<FINALIZE FBOS>>
+GL30.glDeleteFramebuffers(reflectionFrameBuffer);
+		GL11.glDeleteTextures(reflectionTexture);
+		GL30.glDeleteRenderbuffers(reflectionDepthBuffer);
+		GL30.glDeleteFramebuffers(refractionFrameBuffer);
+		GL11.glDeleteTextures(refractionTexture);
+		GL11.glDeleteTextures(refractionDepthTexture);
+<<>>
+<<FINALIZE WATER SHADER>>
+GL20.glUseProgram(0);
+		GL20.glDetachShader(programID, vertexShaderID);
+		GL20.glDetachShader(programID, fragmentShaderID);
+		GL20.glDeleteShader(vertexShaderID);
+		GL20.glDeleteShader(fragmentShaderID);
+		GL20.glDeleteProgram(programID);
+<<>>
+<<FINALIZE GUI SHADER>>
+GL20.glUseProgram(0);
+		GL20.glDetachShader(programID, vertexShaderID);
+		GL20.glDetachShader(programID, fragmentShaderID);
+		GL20.glDeleteShader(vertexShaderID);
+		GL20.glDeleteShader(fragmentShaderID);
+		GL20.glDeleteProgram(programID);
+<<>>
+<<FINALIZE STATIC, TERRAIN, AND NORMAL SHADERS>>
+<<>>
+<<FINALIZE LOADER>>
+for (int vao : vaos) {
+			GL30.glDeleteVertexArrays(vao);
+		}
+		for (int vbo : vbos) {
+			GL15.glDeleteBuffers(vbo);
+		}
+		for (int texture : textures) {
+			GL11.glDeleteTextures(texture);
+		}
+<<>>
+<<>>
+<<CLOSE DISPLAY>>
+Display.destroy();
+<<>>
+<<>>
+
+=====================================================================================================================================================
+
+<<ENGINE CODE>>
+<<INIT>>
+ContextAttribs attribs = new ContextAttribs(3, 2).withForwardCompatible(true).withProfileCore(true);
+				
+				Display.setDisplayMode(new DisplayMode((int) registry.getProperty("internal:screenWidth").get(), (int) registry.getProperty("internal:screenHeight").get()));
+				Display.create(new PixelFormat().withDepthBits(24), attribs);
+				Display.setTitle((String) registry.getProperty("internal:title").get());
+				Display.setResizable(false);
+				
+				glEnable(GL_DEPTH_TEST);
+				Utils.Dim3.enableCulling();
+				Vector3f clearColor = (Vector3f) registry.getProperty("internal:clearColor").get();
+				glClearColor(clearColor.x, clearColor.y, clearColor.z, 1.0f);
+				glViewport(0, 0, (int) registry.getProperty("internal:screenWidth").get(), (int) registry.getProperty("internal:screenHeight").get());
+<<>>
+<<SHADER INIT>>
+int shaderID = GL20.glCreateShader(type);
+		GL20.glShaderSource(shaderID, src);
+		GL20.glCompileShader(shaderID);
+programID = GL20.glCreateProgram();
+		
+		GL20.glAttachShader(programID, vertexShaderID);
+		GL20.glAttachShader(programID, fragmentShaderID);
+		bindAttributes();
+		GL20.glLinkProgram(programID);
+		GL20.glValidateProgram(programID);
+		
+		getAllUniformLocations();
+<<>>
+<<WATER FBO INIT>>
+<<REFLECT FBO INIT>>
+int frameBuffer = GL30.glGenFramebuffers();
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, frameBuffer);
+		GL11.glDrawBuffer(GL30.GL_COLOR_ATTACHMENT0);
+int texture = GL11.glGenTextures();
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
+		GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGB, width, height, 0, GL11.GL_RGB, GL11.GL_UNSIGNED_BYTE, (ByteBuffer) null);
+		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
+		GL32.glFramebufferTexture(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0, texture, 0);
+int depthBuffer = GL30.glGenRenderbuffers();
+		GL30.glBindRenderbuffer(GL30.GL_RENDERBUFFER, depthBuffer);
+		GL30.glRenderbufferStorage(GL30.GL_RENDERBUFFER, GL11.GL_DEPTH_COMPONENT, width, height);
+		GL30.glFramebufferRenderbuffer(GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_ATTACHMENT, GL30.GL_RENDERBUFFER, depthBuffer);
+GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
+		GL11.glViewport(0, 0, (int) screenWidth.get(), (int) screenHeight.get());
+<<>>
+<<REFRACT FBO INIT>>
+int frameBuffer = GL30.glGenFramebuffers();
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, frameBuffer);
+		GL11.glDrawBuffer(GL30.GL_COLOR_ATTACHMENT0);
+int texture = GL11.glGenTextures();
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
+		GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGB, width, height, 0, GL11.GL_RGB, GL11.GL_UNSIGNED_BYTE, (ByteBuffer) null);
+		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
+		GL32.glFramebufferTexture(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0, texture, 0);
+int depthTexture = GL11.glGenTextures();
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, depthTexture);
+		GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL14.GL_DEPTH_COMPONENT32, width, height, 0, GL11.GL_DEPTH_COMPONENT, GL11.GL_FLOAT, (ByteBuffer) null);
+		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
+		GL32.glFramebufferTexture(GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_ATTACHMENT, depthTexture, 0);
+GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
+		GL11.glViewport(0, 0, (int) screenWidth.get(), (int) screenHeight.get());
+<<>>
+<<>>
+<<FOR EACH TEXTURE>>
+texture = TextureLoader.getTexture("PNG", new FileInputStream("res/" + fileName
+					+ ".png"));
+GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
+			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER,
+					GL11.GL_LINEAR_MIPMAP_LINEAR);
+			GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL14.GL_TEXTURE_LOD_BIAS, -0.4f);
+<<>>
+<<TERRAIN GENERATION>>
+int vaoID = GL30.glGenVertexArrays();
+		vaos.add(vaoID);
+		GL30.glBindVertexArray(vaoID);
+int vboID = GL15.glGenBuffers();
+		vbos.add(vboID);
+GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboID);
+IntBuffer buffer = storeDataInIntBuffer(indices);		GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
+<<FOR EACH ATTRIBUTE>>
+int vboID = GL15.glGenBuffers();
+		vbos.add(vboID);
+		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboID);
+		FloatBuffer buffer = storeDataInFloatBuffer(data);
+		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
+		GL20.glVertexAttribPointer(attributeNumber, coordinateSize, GL11.GL_FLOAT, false, 0, 0);
+		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+<<>>
+GL30.glBindVertexArray(0);
+<<>>
+<<GAME LOOP>>
+glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+<<BIND REFLECT>>
+GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, frameBuffer);
+		GL11.glViewport(0, 0, width, height);
+<<>>
+<<CLIP SET>>
+GL11.glEnable(GL11.GL_CLIP_PLANE0);
+~{ UPDATE SHADER CLIP UNIFORMS }~
+<<>>
+<<RENDER TERRAINS>>
+<<>>
+<<RENDER ENTITIES>>
+<<>>
+<<RENDER SKYBOX>>
+<<>>
+<<BIND REFRACT>>
+GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, frameBuffer);
+		GL11.glViewport(0, 0, width, height);
+<<>>
+<<CLIP SET>>
+GL11.glEnable(GL11.GL_CLIP_PLANE0);
+~{ UPDATE SHADER CLIP UNIFORMS }~
+<<>>
+<<RENDER TERRAINS>>
+<<>>
+<<RENDER ENTITIES>>
+<<>>
+<<RENDER SKYBOX>>
+<<>>
+<<UNBIND FBOS>>
+GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
+		GL11.glViewport(0, 0, (int) screenWidth.get(), (int) screenHeight.get());
+<<>>
+<<CLIP SET>>
+GL11.glEnable(GL11.GL_CLIP_PLANE0);
+~{ UPDATE SHADER CLIP UNIFORMS }~
+<<>>
+<<RENDER TERRAINS>>
+<<>>
+<<RENDER ENTITIES>>
+<<>>
+<<RENDER SKYBOX>>
+<<>>
+<<RENDER WATER>>
+<<>>
+<<RENDER GUI>>
+<<>>
+<<UPDATE DISPLAY>>
+Display.sync((int) propertyTargetFPS.get());
+			Display.update();
+<<>>
+<<>>
+<<FINALIZE>>
+<<FINALIZE STATIC, TERRAIN, WATER, AND GUI SHADERS>>
+<<>>
+<<FINALIZE LOADER>>
+for (int vao : vaos)
+			GL30.glDeleteVertexArrays(vao);
+		
+		for (int vbo : vbos)
+			GL15.glDeleteBuffers(vbo);
+		
+		for (int texture : textures)
+			GL11.glDeleteTextures(texture);
+<<>>
+<<FINALIZE FBOS>>
+GL30.glDeleteFramebuffers(reflectionFrameBuffer);
+		GL11.glDeleteTextures(reflectionTexture);
+		GL30.glDeleteRenderbuffers(reflectionDepthBuffer);
+		GL30.glDeleteFramebuffers(refractionFrameBuffer);
+		GL11.glDeleteTextures(refractionTexture);
+		GL11.glDeleteTextures(refractionDepthTexture);
+<<>>
+<<>>
+<<CLOSE DISPLAY>>
+Display.destroy();
+<<>>
+<<>>
